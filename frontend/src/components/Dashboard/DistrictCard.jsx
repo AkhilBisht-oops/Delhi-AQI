@@ -2,31 +2,41 @@ import React from 'react';
 
 const DistrictCard = ({ district }) => {
   const getStatusColor = (aqi) => {
-    if (aqi <= 50) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-    if (aqi <= 100) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-    if (aqi <= 150) return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
-    if (aqi <= 200) return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-    if (aqi <= 300) return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
-    return 'bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-300';
+    if (aqi <= 50) return { bg: 'rgba(0,228,0,0.15)', text: '#00e400', shadow: 'rgba(0,228,0,0.1)' };
+    if (aqi <= 100) return { bg: 'rgba(255,222,51,0.15)', text: '#ffde33', shadow: 'rgba(255,222,51,0.1)' };
+    if (aqi <= 150) return { bg: 'rgba(255,153,51,0.15)', text: '#ff9933', shadow: 'rgba(255,153,51,0.1)' };
+    if (aqi <= 200) return { bg: 'rgba(204,0,51,0.15)', text: '#cc0033', shadow: 'rgba(204,0,51,0.1)' };
+    if (aqi <= 300) return { bg: 'rgba(102,0,153,0.15)', text: '#9933ff', shadow: 'rgba(102,0,153,0.1)' };
+    return { bg: 'rgba(126,0,35,0.2)', text: '#ff3366', shadow: 'rgba(126,0,35,0.1)' };
   };
 
+  const colors = getStatusColor(district.aqi);
+
   return (
-    <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+    <div className="px-5 py-4 hover:bg-white/[0.03] transition-all cursor-pointer group">
       <div className="flex items-center justify-between">
         <div>
-          <div className="font-medium">{district.name}</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="font-semibold text-gray-200 group-hover:text-white transition-colors">{district.name}</div>
+          <div className="text-sm text-gray-500 mt-0.5">
             PM2.5: {district.pm25} µg/m³
           </div>
         </div>
         <div className="flex items-center space-x-3">
           <div className="text-right">
-            <div className="font-bold">{district.aqi}</div>
-            <div className={`text-xs px-2 py-1 rounded-full ${getStatusColor(district.aqi)}`}>
+            <div 
+              className="text-lg font-black"
+              style={{ color: colors.text, textShadow: `0 0 10px ${colors.shadow}` }}
+            >
+              {district.aqi}
+            </div>
+            <div 
+              className="text-[10px] px-2.5 py-0.5 rounded-full font-semibold"
+              style={{ backgroundColor: colors.bg, color: colors.text }}
+            >
               {district.status}
             </div>
           </div>
-          <div className="text-xl">
+          <div className="text-lg opacity-60 group-hover:opacity-100 transition-opacity">
             {district.trend === 'up' ? '↗️' : 
              district.trend === 'down' ? '↘️' : '➡️'}
           </div>

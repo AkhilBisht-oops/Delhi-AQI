@@ -2,25 +2,30 @@ import React from 'react';
 
 const StatsCard = ({ title, value, unit, change, trend, icon, description }) => {
   return (
-    <div className="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <div className="p-5 glass-card glass-card-hover transition-all duration-300">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">{title}</div>
-          <div className="text-2xl font-bold mt-1">
-            {value} {unit && <span className="text-lg text-gray-500">{unit}</span>}
+          <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{title}</div>
+          <div className="text-2xl font-black mt-2 text-white">
+            {value} {unit && <span className="text-sm font-normal text-gray-500">{unit}</span>}
           </div>
           {description && (
-            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">{description}</div>
+            <div className="text-xs text-gray-500 mt-1.5">{description}</div>
           )}
           {change && (
-            <div className={`text-sm mt-1 font-medium ${
-              trend === 'up' ? 'text-red-600' : 'text-green-600'
+            <div className={`text-xs mt-1.5 font-bold flex items-center gap-1 ${
+              trend === 'up' ? 'text-red-400' : 'text-emerald-400'
             }`}>
-              {change} {trend === 'up' ? '↗' : '↘'}
+              <span className={`inline-block w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
+                trend === 'up' ? 'bg-red-500/20' : 'bg-emerald-500/20'
+              }`}>
+                {trend === 'up' ? '↑' : '↓'}
+              </span>
+              {change}
             </div>
           )}
         </div>
-        <div className="text-3xl">{icon}</div>
+        <div className="text-3xl opacity-80">{icon}</div>
       </div>
     </div>
   );

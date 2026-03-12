@@ -1,10 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
-import Logo from '../Logo';
 
-// Import professional icons
 import { 
   LayoutDashboard, 
   Map, 
@@ -13,11 +10,10 @@ import {
   Bell,
   Shield,
   Users,
-  Cloud
+  Globe
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { theme } = useTheme();
   const { user, isAdmin } = useAuth();
 
   const navigation = [
@@ -26,6 +22,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       href: '/', 
       icon: <LayoutDashboard className="w-5 h-5" />,
       description: 'Real-time monitoring'
+    },
+    { 
+      name: 'Global AQI', 
+      href: '/globe', 
+      icon: <Globe className="w-5 h-5" />,
+      description: '3D World pollution map'
     },
     { 
       name: 'Heatmap', 
@@ -63,29 +65,11 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* Sidebar for mobile */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className={`flex flex-col h-full ${
-          theme === 'dark' 
-            ? 'bg-gray-900 border-r border-gray-800' 
-            : 'bg-white border-r border-gray-200'
-        }`}>
-          {/* Sidebar header */}
-          {/* <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-800">
-            <Logo size="md" showText={true} />
-            <button
-              onClick={onClose}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div> */}
-
-          {/* Navigation - FIXED VERSION */}
+        <div className="flex flex-col h-full bg-[#080e1f] border-r border-white/5">
+          {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               if (item.protected && !user) return null;
@@ -97,26 +81,24 @@ const Sidebar = ({ isOpen, onClose }) => {
                   to={item.href}
                   onClick={onClose}
                   className={({ isActive }) =>
-                    `flex items-center px-4 py-3 rounded-lg transition-all ${
+                    `flex items-center px-4 py-3 rounded-xl transition-all ${
                       isActive
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                        : theme === 'dark'
-                          ? 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-gradient-to-r from-blue-600/80 to-purple-600/80 text-white shadow-lg shadow-blue-500/20'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
                     }`
                   }
                 >
-                  {({ isActive }) => (  // ✅ Get isActive as children prop
+                  {({ isActive }) => (
                     <>
                       <span className={`mr-3 ${isActive ? 'text-white' : 'text-gray-500'}`}>
                         {item.icon}
                       </span>
                       <div className="flex-1">
                         <span className="font-medium">{item.name}</span>
-                        <div className="text-xs opacity-75">{item.description}</div>
+                        <div className="text-xs opacity-60">{item.description}</div>
                       </div>
                       {isActive && (
-                        <div className="w-2 h-2 rounded-full bg-white"></div>
+                        <div className="w-2 h-2 rounded-full bg-white shadow-lg shadow-white/50"></div>
                       )}
                     </>
                   )}
@@ -125,16 +107,16 @@ const Sidebar = ({ isOpen, onClose }) => {
             })}
           </nav>
 
-          {/* User info at bottom */}
+          {/* User info */}
           {user && (
-            <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+            <div className="p-4 border-t border-white/5">
               <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div className="ml-3">
-                  <div className="font-medium">{user.name || 'User'}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="font-medium text-gray-200">{user.name || 'User'}</div>
+                  <div className="text-sm text-gray-500">
                     {isAdmin ? 'Administrator' : 'Premium User'}
                   </div>
                 </div>
