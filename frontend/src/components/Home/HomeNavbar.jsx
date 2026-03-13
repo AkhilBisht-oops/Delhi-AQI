@@ -5,7 +5,6 @@ import { Globe, Menu, X } from 'lucide-react';
 
 const navItems = [
   { name: 'Home', href: '/' },
-  { name: 'Dashboard', href: '/dashboard' },
   { name: 'About', href: '/about' },
   { name: 'Contact', href: '/contact' },
 ];
@@ -13,20 +12,42 @@ const navItems = [
 export default function HomeNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 30);
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Update scrolled state for styling
+      setScrolled(currentScrollY > 30);
+
+      // Visibility logic: hide when scrolling down, show when scrolling up
+      if (currentScrollY < 10) {
+        setVisible(true); // Always show at the very top
+      } else if (currentScrollY > lastScrollY) {
+        setVisible(false); // Scrolling down
+      } else {
+        setVisible(true); // Scrolling up
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   return (
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
       initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
+      animate={{ 
+        y: visible ? 0 : -100, 
+        opacity: visible ? 1 : 0 
+      }}
+      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }} 
       style={{
         backgroundColor: scrolled
           ? 'rgba(5, 10, 24, 0.85)'
@@ -107,17 +128,6 @@ export default function HomeNavbar() {
               </span>
             </div>
 
-            {/* Dashboard CTA (desktop) */}
-            <Link to="/dashboard" className="hidden md:block">
-              <motion.button
-                className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
-                whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(59,130,246,0.3)' }}
-                whileTap={{ scale: 0.97 }}
-              >
-                Open Dashboard
-              </motion.button>
-            </Link>
-
             {/* Mobile toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -167,21 +177,6 @@ export default function HomeNavbar() {
                   </motion.div>
                 );
               })}
-              {/* Mobile Dashboard CTA */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: navItems.length * 0.08, duration: 0.3 }}
-                className="pt-2"
-              >
-                <Link
-                  to="/dashboard"
-                  onClick={() => setMobileOpen(false)}
-                  className="block w-full text-center px-4 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-500/15"
-                >
-                  Open Dashboard
-                </Link>
-              </motion.div>
             </nav>
           </motion.div>
         )}

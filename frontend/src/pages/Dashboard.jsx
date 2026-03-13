@@ -172,14 +172,14 @@ const Dashboard = () => {
   }, [globalData, selectedRegion, stats]);
 
   const liveData = useMemo(() => {
-    if (!stats.worst) return null;
-    const w = stats.worst[1];
+    if (!regionStats.worst) return null;
+    const w = regionStats.worst[1];
     return {
-      overallAQI: stats.avg, pm25: w.pm25 || 165, pm10: w.pm10 || 245, no2: 45,
+      overallAQI: regionStats.avg, pm25: w.pm25 || 165, pm10: w.pm10 || 245, no2: 45,
       temperature: 22, humidity: 55, windSpeed: 8, windDirection: 'NW',
       pressure: 1013, lastUpdated: new Date().toLocaleTimeString(), primaryPollutant: 'PM2.5'
     };
-  }, [stats]);
+  }, [regionStats]);
 
   const regions = [
     { id: 'all', label: '🌍 All' },
@@ -221,20 +221,20 @@ const Dashboard = () => {
               <span className="text-sm font-bold text-green-400 uppercase tracking-widest">Live Monitoring</span>
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent leading-tight mb-4">
-              World Air Quality
+              {selectedRegion === 'all' ? 'World' : regions.find(r => r.id === selectedRegion)?.label.split(' ')[1]} Air Quality
             </h1>
             <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-              Real-time pollution monitoring across <span className="text-white font-bold">{stats.total} countries</span>
+              Real-time pollution monitoring across <span className="text-white font-bold">{regionStats.total} countries</span>
             </p>
           </div>
           
           {/* Stats ribbon */}
           <div className="animate-fade-in-up flex flex-wrap justify-center gap-4 md:gap-8" style={{ animationDelay: '0.5s' }}>
             {[
-              { label: 'Global Avg', value: stats.avg, color: stats.avg > 100 ? '#ef4444' : stats.avg > 50 ? '#eab308' : '#22c55e' },
-              { label: 'Most Polluted', value: stats.max, color: '#ef4444', sub: stats.worst?.[1]?.city },
-              { label: 'Cleanest', value: stats.min, color: '#22c55e', sub: stats.best?.[1]?.city },
-              { label: 'Countries', value: stats.total, color: '#3b82f6' },
+              { label: selectedRegion === 'all' ? 'Global Avg' : 'Region Avg', value: regionStats.avg, color: regionStats.avg > 100 ? '#ef4444' : regionStats.avg > 50 ? '#eab308' : '#22c55e' },
+              { label: 'Most Polluted', value: regionStats.max, color: '#ef4444', sub: regionStats.worst?.[1]?.city },
+              { label: 'Cleanest', value: regionStats.min, color: '#22c55e', sub: regionStats.best?.[1]?.city },
+              { label: 'Countries', value: regionStats.total, color: '#3b82f6' },
             ].map((s, i) => (
               <div key={i} className="glass-card px-5 py-3 text-center min-w-[120px]">
                 <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold">{s.label}</div>
@@ -257,10 +257,10 @@ const Dashboard = () => {
       <div className="px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { title: 'Global Average', value: String(regionStats.avg), unit: 'AQI', icon: <Activity className="w-6 h-6 text-blue-400" />, delay: '0.1s' },
-            { title: 'Most Polluted', value: stats.worst ? String(stats.worst[1].aqi) : '--', unit: 'AQI', description: stats.worst?.[1]?.city, icon: <TrendingUp className="w-6 h-6 text-red-400" />, delay: '0.2s' },
-            { title: 'Cleanest Air', value: stats.best ? String(stats.best[1].aqi) : '--', unit: 'AQI', description: stats.best?.[1]?.city, icon: <Sparkles className="w-6 h-6 text-emerald-400" />, delay: '0.3s' },
-            { title: 'Countries', value: String(stats.total), description: 'Tracked worldwide', icon: <Globe className="w-6 h-6 text-purple-400" />, delay: '0.4s' },
+            { title: selectedRegion === 'all' ? 'Global Average' : 'Region Average', value: String(regionStats.avg), unit: 'AQI', icon: <Activity className="w-6 h-6 text-blue-400" />, delay: '0.1s' },
+            { title: 'Most Polluted', value: regionStats.worst ? String(regionStats.worst[1].aqi) : '--', unit: 'AQI', description: regionStats.worst?.[1]?.city, icon: <TrendingUp className="w-6 h-6 text-red-400" />, delay: '0.2s' },
+            { title: 'Cleanest Air', value: regionStats.best ? String(regionStats.best[1].aqi) : '--', unit: 'AQI', description: regionStats.best?.[1]?.city, icon: <Sparkles className="w-6 h-6 text-emerald-400" />, delay: '0.3s' },
+            { title: 'Countries', value: String(regionStats.total), description: selectedRegion === 'all' ? 'Tracked worldwide' : `Tracked in ${selectedRegion}`, icon: <Globe className="w-6 h-6 text-purple-400" />, delay: '0.4s' },
           ].map((stat, i) => (
             <div key={i} className="animate-fade-in-up" style={{ animationDelay: stat.delay }}>
               <StatsCard {...stat} />

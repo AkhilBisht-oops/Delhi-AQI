@@ -153,16 +153,6 @@ export default function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {[
                 {
-                  label: 'Dashboard',
-                  desc: 'Detailed analytics',
-                  href: '/dashboard',
-                  icon: <BarChart3 className="w-5 h-5" />,
-                  gradient: 'from-blue-500/15 to-purple-500/15',
-                  border: 'border-blue-500/20',
-                  text: 'text-blue-400',
-                  glow: 'rgba(59,130,246,0.1)',
-                },
-                {
                   label: 'Global AQI',
                   desc: '3D interactive globe',
                   href: '/globe',

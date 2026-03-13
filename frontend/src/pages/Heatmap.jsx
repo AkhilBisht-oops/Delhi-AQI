@@ -1,508 +1,295 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useTheme } from '../contexts/ThemeContext';
-import { Map, Filter, AlertCircle } from 'lucide-react';
+import { 
+  Map as MapIcon, 
+  Filter, 
+  AlertCircle, 
+  Globe, 
+  Activity, 
+  TrendingUp, 
+  Sparkles,
+  Maximize2
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Component to handle map center/zoom changes
+function ChangeView({ center, zoom }) {
+  const map = useMap();
+  map.setView(center, zoom);
+  return null;
+}
 
 const Heatmap = () => {
   const { theme } = useTheme();
-  const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const [globalData, setGlobalData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedPollutant, setSelectedPollutant] = useState('aqi');
+  const [mapCenter, setMapCenter] = useState([20, 0]);
+  const [mapZoom, setMapZoom] = useState(2);
+  const [activePoint, setActivePoint] = useState(null);
 
-  const delhiDistricts = [
-    { 
-      id: 1, 
-      name: 'Central Delhi', 
-      lat: 28.633, 
-      lng: 77.220, 
-      aqi: 245, 
-      pm25: 185, 
-      pm10: 280, 
-      no2: 52,
-      color: '#7e0023',
-      position: { top: '45%', left: '50%' }
-    },
-    { 
-      id: 2, 
-      name: 'New Delhi', 
-      lat: 28.6139, 
-      lng: 77.2090, 
-      aqi: 198, 
-      pm25: 165, 
-      pm10: 245, 
-      no2: 45,
-      color: '#cc0033',
-      position: { top: '48%', left: '52%' }
-    },
-    { 
-      id: 3, 
-      name: 'South Delhi', 
-      lat: 28.524, 
-      lng: 77.222, 
-      aqi: 176, 
-      pm25: 145, 
-      pm10: 210, 
-      no2: 38,
-      color: '#ff9933',
-      position: { top: '60%', left: '50%' }
-    },
-    { 
-      id: 4, 
-      name: 'West Delhi', 
-      lat: 28.678, 
-      lng: 77.072, 
-      aqi: 312, 
-      pm25: 245, 
-      pm10: 340, 
-      no2: 65,
-      color: '#7e0023',
-      position: { top: '40%', left: '40%' }
-    },
-    { 
-      id: 5, 
-      name: 'North Delhi', 
-      lat: 28.704, 
-      lng: 77.102, 
-      aqi: 154, 
-      pm25: 125, 
-      pm10: 195, 
-      no2: 32,
-      color: '#ff9933',
-      position: { top: '30%', left: '48%' }
-    },
-    { 
-      id: 6, 
-      name: 'East Delhi', 
-      lat: 28.625, 
-      lng: 77.315, 
-      aqi: 287, 
-      pm25: 215, 
-      pm10: 310, 
-      no2: 58,
-      color: '#660099',
-      position: { top: '50%', left: '60%' }
-    },
-    { 
-      id: 7, 
-      name: 'Dwarka', 
-      lat: 28.584, 
-      lng: 77.049, 
-      aqi: 132, 
-      pm25: 110, 
-      pm10: 180, 
-      no2: 28,
-      color: '#ffde33',
-      position: { top: '55%', left: '38%' }
-    },
-    { 
-      id: 8, 
-      name: 'Rohini', 
-      lat: 28.743, 
-      lng: 77.081, 
-      aqi: 198, 
-      pm25: 165, 
-      pm10: 245, 
-      no2: 45,
-      color: '#cc0033',
-      position: { top: '25%', left: '45%' }
-    },
+  const regions = [
+    { id: 'world', label: '🌎 World', center: [20, 0], zoom: 2 },
+    { id: 'asia', label: '🌏 Asia', center: [34, 100], zoom: 4 },
+    { id: 'europe', label: '🌍 Europe', center: [54, 15], zoom: 4 },
+    { id: 'americas', label: '🌎 Americas', center: [15, -80], zoom: 3 },
+    { id: 'africa', label: '🌍 Africa', center: [2, 20], zoom: 3 },
+    { id: 'oceania', label: '🏝️ Oceania', center: [-25, 135], zoom: 4 },
   ];
+
+  useEffect(() => {
+    fetchGlobalData();
+    const interval = setInterval(fetchGlobalData, 180000); // 3 mins
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchGlobalData = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/aqi/global');
+      if (!res.ok) throw new Error('Failed to fetch global data');
+      const data = await res.json();
+      
+      const formatted = Object.entries(data).map(([code, country]) => ({
+        code,
+        name: country.city || code,
+        aqi: country.aqi,
+        lat: country.lat || 0,
+        lng: country.lng || 0,
+        pm25: country.pm25 || Math.round(country.aqi * 0.7),
+        pm10: country.pm10 || Math.round(country.aqi * 1.2),
+        status: getAQILevel(country.aqi)
+      })).filter(p => p.lat !== 0);
+
+      setGlobalData(formatted);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError('Live data connection interrupted. Using local cache.');
+      setLoading(false);
+    }
+  };
 
   const getAQILevel = (aqi) => {
     if (aqi <= 50) return 'Good';
     if (aqi <= 100) return 'Moderate';
-    if (aqi <= 150) return 'Unhealthy for Sensitive';
+    if (aqi <= 150) return 'Unhealthy (S)';
     if (aqi <= 200) return 'Unhealthy';
     if (aqi <= 300) return 'Very Unhealthy';
     return 'Hazardous';
   };
 
-  const getPollutantValue = (district, pollutant) => {
-    switch(pollutant) {
-      case 'aqi': return district.aqi;
-      case 'pm25': return district.pm25;
-      case 'pm10': return district.pm10;
-      case 'no2': return district.no2;
-      default: return district.aqi;
-    }
+  const getColor = (aqi) => {
+    if (aqi <= 50) return '#22c55e'; // emerald-500
+    if (aqi <= 100) return '#eab308'; // yellow-500
+    if (aqi <= 150) return '#f97316'; // orange-500
+    if (aqi <= 200) return '#ef4444'; // red-500
+    if (aqi <= 300) return '#a855f7'; // purple-500
+    return '#7e0023'; // maroon
   };
 
-  const getPollutantColor = (value, pollutant) => {
-    if (pollutant === 'aqi') {
-      if (value <= 50) return '#009966';
-      if (value <= 100) return '#ffde33';
-      if (value <= 150) return '#ff9933';
-      if (value <= 200) return '#cc0033';
-      if (value <= 300) return '#660099';
-      return '#7e0023';
-    } else if (pollutant === 'pm25') {
-      if (value <= 12) return '#009966';
-      if (value <= 35) return '#ffde33';
-      if (value <= 55) return '#ff9933';
-      if (value <= 150) return '#cc0033';
-      if (value <= 250) return '#660099';
-      return '#7e0023';
-    } else {
-      // Simple gradient for other pollutants
-      const maxValue = pollutant === 'pm10' ? 400 : 100;
-      const intensity = Math.min(value / maxValue, 1);
-      const r = Math.floor(255 * intensity);
-      const g = Math.floor(255 * (1 - intensity));
-      return `rgb(${r}, ${g}, 0)`;
-    }
-  };
-
-  const getPollutantUnit = (pollutant) => {
-    switch(pollutant) {
-      case 'aqi': return 'AQI';
-      case 'pm25':
-      case 'pm10': return 'µg/m³';
-      case 'no2': return 'ppb';
-      default: return '';
-    }
-  };
+  const stats = useMemo(() => {
+    if (globalData.length === 0) return null;
+    const sorted = [...globalData].sort((a, b) => b.aqi - a.aqi);
+    const avg = Math.round(globalData.reduce((acc, curr) => acc + curr.aqi, 0) / globalData.length);
+    return {
+      worst: sorted[0],
+      best: sorted[sorted.length - 1],
+      avg,
+      total: globalData.length
+    };
+  }, [globalData]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center">
-                <Map className="w-8 h-8 mr-3" />
-                Delhi Pollution Heatmap
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-2">
-                Interactive visualization of pollution levels across Delhi districts
-            </p>
+    <div className="space-y-6 relative min-h-screen pb-12">
+      {/* Header Panel */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#050a18]/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 mx-auto">
+        <div className="animate-fade-in-up">
+          <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-400 via-white to-cyan-400 bg-clip-text text-transparent leading-tight tracking-tight">
+            Global Air Intelligence
+          </h1>
+          <p className="text-gray-400 text-[10px] font-bold mt-1 opacity-70 uppercase tracking-widest">
+            Station Synchronized • <span className="text-blue-400">{stats?.total || 0} Nodes</span>
+          </p>
         </div>
-        
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded bg-gradient-to-r from-green-500 to-red-600"></div>
-            <span className="text-sm">Low → High Pollution</span>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10">
+            {regions.map(r => (
+              <button
+                key={r.id}
+                onClick={() => { setMapCenter(r.center); setMapZoom(r.zoom); }}
+                className="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:text-white text-gray-400 hover:bg-white/5 active:scale-95"
+              >
+                {r.label}
+              </button>
+            ))}
           </div>
+          
           <select 
             value={selectedPollutant}
             onChange={(e) => setSelectedPollutant(e.target.value)}
-            className={`px-4 py-2 rounded-lg border flex items-center ${
-                theme === 'dark' 
-                ? 'bg-gray-800 border-gray-700 text-gray-100' 
-                : 'bg-white border-gray-300 text-gray-900'
-            }`}
-            >
-                <Filter className="w-4 h-4 mr-2" />
-                <option value="aqi">AQI</option>
-                <option value="pm25">PM2.5</option>
-                <option value="pm10">PM10</option>
-                <option value="no2">NO₂</option>
-            </select>
+            className="bg-[#0f172a] border border-white/10 text-white px-4 py-2 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          >
+            <option value="aqi">AQI Index</option>
+            <option value="pm25">PM2.5</option>
+            <option value="pm10">PM10</option>
+          </select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Interactive Map */}
-        <div className="lg:col-span-3">
-          <div className={`rounded-2xl overflow-hidden border ${
-            theme === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold">Delhi Pollution Map</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                Click on any district for detailed information
-              </p>
+        {/* Professional Map View */}
+        <div className="lg:col-span-3 relative rounded-[40px] overflow-hidden border border-white/10 h-[700px] group shadow-2xl shadow-blue-500/10">
+          {loading && (
+            <div className="absolute inset-0 z-[1000] bg-[#050a18] flex flex-col items-center justify-center">
+              <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_30px_rgba(59,130,246,0.3)]"></div>
+              <p className="text-blue-400 font-black tracking-tighter animate-pulse">SYNCHRONIZING GLOBAL STATIONS...</p>
             </div>
+          )}
+          
+          <MapContainer 
+            center={mapCenter} 
+            zoom={mapZoom} 
+            style={{ height: '100%', width: '100%', background: '#050a18' }}
+            zoomControl={false}
+            attributionControl={false}
+          >
+            <ChangeView center={mapCenter} zoom={mapZoom} />
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
             
-            {/* Interactive Map Visualization */}
-            <div className="relative p-6 h-[600px] bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800">
-              {/* Delhi Outline Map */}
-              <div className="absolute inset-6 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                {/* River Yamuna */}
-                <div className="absolute left-1/4 top-1/4 bottom-1/4 w-2 bg-blue-300 dark:bg-blue-800 rounded-full"></div>
-                
-                {/* District Markers */}
-                {delhiDistricts.map(district => {
-                  const value = getPollutantValue(district, selectedPollutant);
-                  const color = getPollutantColor(value, selectedPollutant);
-                  const size = 20 + (value / 500) * 40; // Scale marker size based on value
-                  
-                  return (
-                    <button
-                      key={district.id}
-                      onClick={() => setSelectedDistrict(district)}
-                      className={`absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white dark:border-gray-900 shadow-lg transition-all hover:scale-110 ${
-                        selectedDistrict?.id === district.id ? 'ring-4 ring-blue-400 ring-opacity-50 scale-110' : ''
-                      }`}
-                      style={{
-                        top: district.position.top,
-                        left: district.position.left,
-                        width: `${size}px`,
-                        height: `${size}px`,
-                        backgroundColor: color,
-                      }}
-                      title={`${district.name}: ${value} ${getPollutantUnit(selectedPollutant)}`}
-                    >
-                      <span className="sr-only">{district.name}</span>
-                    </button>
-                  );
-                })}
-                
-                {/* Labels */}
-                {delhiDistricts.map(district => (
-                  <div
-                    key={`label-${district.id}`}
-                    className="absolute text-xs font-medium text-gray-700 dark:text-gray-300"
-                    style={{
-                      top: `calc(${district.position.top} + 15px)`,
-                      left: district.position.left,
-                      transform: 'translateX(-50%)',
-                    }}
-                  >
-                    {district.name}
+            {globalData.map((city) => (
+              <CircleMarker
+                key={city.code}
+                center={[city.lat, city.lng]}
+                radius={city.aqi / 10 + 2}
+                pathOptions={{
+                  fillColor: getColor(city.aqi),
+                  fillOpacity: 0.6,
+                  color: getColor(city.aqi),
+                  weight: 2,
+                }}
+                eventHandlers={{
+                  click: () => setActivePoint(city)
+                }}
+              >
+                <Popup className="aqi-popup">
+                  <div className="p-2 min-w-[180px]">
+                    <div className="flex justify-between items-start mb-2">
+                        <span className="font-black text-gray-800 uppercase tracking-tighter">{city.name}</span>
+                        <span className="text-[10px] text-gray-400 font-bold">{city.code}</span>
+                    </div>
+                    <div className="text-3xl font-black mb-1" style={{ color: getColor(city.aqi) }}>
+                        {city.aqi} <span className="text-xs uppercase opacity-60">AQI</span>
+                    </div>
+                    <div className="text-[10px] font-black uppercase text-gray-500 border-t border-gray-100 pt-2 flex justify-between">
+                        <span>PM2.5: {city.pm25}</span>
+                        <span className="text-blue-500">{city.status}</span>
+                    </div>
                   </div>
-                ))}
-              </div>
-              
-              {/* Legend */}
-              <div className={`absolute bottom-4 left-4 right-4 p-4 rounded-lg backdrop-blur-sm ${
-                theme === 'dark' 
-                  ? 'bg-gray-800/80 border border-gray-700' 
-                  : 'bg-white/80 border border-gray-200'
-              }`}>
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <span className="font-medium">Pollution Level: </span>
-                    <span className={`font-bold ${
-                      selectedDistrict ? '' : 'text-gray-500'
-                    }`}>
-                      {selectedDistrict 
-                        ? `${getPollutantValue(selectedDistrict, selectedPollutant)} ${getPollutantUnit(selectedPollutant)}`
-                        : 'Select a district'
-                      }
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 rounded bg-green-500"></div>
-                    <span className="text-sm">Low</span>
-                    <div className="w-12 h-2 bg-gradient-to-r from-green-500 via-yellow-500 to-red-600 rounded"></div>
-                    <div className="w-4 h-4 rounded bg-red-600"></div>
-                    <span className="text-sm">High</span>
-                  </div>
+                </Popup>
+              </CircleMarker>
+            ))}
+          </MapContainer>
+
+          {/* Map Overlay Elements */}
+          <div className="absolute bottom-10 right-10 z-[500] pointer-events-none space-y-3">
+             <div className="glass-card p-4 flex flex-col items-end gap-2 text-right">
+                <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Global Status</div>
+                <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-emerald-400">GOOD</span>
+                    <div className="w-20 h-1.5 rounded-full bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-600"></div>
+                    <span className="text-xs font-bold text-red-500">HAZARDOUS</span>
                 </div>
-              </div>
-            </div>
+             </div>
           </div>
+
+          {/* Error Warning */}
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute top-10 left-10 z-[500] glass-card border-amber-500/30 p-3 flex items-center gap-3"
+              >
+                <AlertCircle className="w-5 h-5 text-amber-500" />
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-tight">{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Side Panel */}
+        {/* Intelligence Sidebar */}
         <div className="space-y-6">
-          {/* Selected District Info */}
-          <div className={`p-6 rounded-2xl border ${
-            theme === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <h3 className="font-bold text-lg mb-4">
-              {selectedDistrict ? selectedDistrict.name : 'Select a District'}
+          {/* Active Insight Card */}
+          <div className="glass-card p-6 border-blue-500/20 shadow-xl shadow-blue-500/5">
+            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] mb-6 flex items-center justify-between opacity-60">
+              Active Intelligence
+              <Activity className="w-4 h-4 text-blue-500" />
             </h3>
             
-            {selectedDistrict ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+            {stats ? (
+              <div className="space-y-8">
+                <div>
+                  <div className="text-[10px] font-black text-gray-400 mb-1 uppercase tracking-widest opacity-60">Global Average</div>
+                  <div className="text-5xl font-black text-white tracking-tighter leading-none">
+                    {stats.avg}
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                    <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Sync Active</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-6">
                   <div>
-                    <div className="text-sm text-gray-500">AQI</div>
-                    <div className="text-2xl font-bold" style={{ color: getPollutantColor(selectedDistrict.aqi, 'aqi') }}>
-                      {selectedDistrict.aqi}
-                    </div>
-                    <div className="text-sm">{getAQILevel(selectedDistrict.aqi)}</div>
+                    <div className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1 opacity-80">Peak</div>
+                    <div className="text-sm font-black text-white leading-tight truncate">{stats.worst.name}</div>
+                    <div className="text-2xl font-black text-red-500 tracking-tighter">{stats.worst.aqi}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">{selectedPollutant.toUpperCase()}</div>
-                    <div className="text-2xl font-bold">
-                      {getPollutantValue(selectedDistrict, selectedPollutant)}
-                    </div>
-                    <div className="text-sm">{getPollutantUnit(selectedPollutant)}</div>
+                    <div className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1 opacity-80">Cleanest</div>
+                    <div className="text-sm font-black text-white leading-tight truncate">{stats.best.name}</div>
+                    <div className="text-2xl font-black text-emerald-500 tracking-tighter">{stats.best.aqi}</div>
                   </div>
                 </div>
                 
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h4 className="font-medium mb-2">All Pollutants</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">PM2.5</span>
-                      <span className="font-medium">{selectedDistrict.pm25} µg/m³</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">PM10</span>
-                      <span className="font-medium">{selectedDistrict.pm10} µg/m³</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">NO₂</span>
-                      <span className="font-medium">{selectedDistrict.no2} ppb</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <button className="w-full mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-                  Set Alert for this Area
+                <button className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-transform">
+                  Export Dataset
                 </button>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-4">📍</div>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Click on any district on the map to view detailed information
-                </p>
-              </div>
+              <div className="py-12 text-center text-gray-500 italic text-sm">Quantizing data...</div>
             )}
           </div>
 
-          {/* Legend */}
-          <div className={`p-6 rounded-2xl border ${
-            theme === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <h3 className="font-bold text-lg mb-4">AQI Color Legend</h3>
+          <div className="glass-card p-6">
+            <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Filter className="w-4 h-4" />
+              Legend
+            </h3>
             <div className="space-y-3">
               {[
-                { range: '0-50', label: 'Good', color: '#009966' },
-                { range: '51-100', label: 'Moderate', color: '#ffde33' },
-                { range: '101-150', label: 'Unhealthy for Sensitive', color: '#ff9933' },
-                { range: '151-200', label: 'Unhealthy', color: '#cc0033' },
-                { range: '201-300', label: 'Very Unhealthy', color: '#660099' },
-                { range: '301+', label: 'Hazardous', color: '#7e0023' },
-              ].map((item, index) => (
-                <div key={index} className="flex items-center">
-                  <div 
-                    className="w-6 h-6 rounded mr-3"
-                    style={{ backgroundColor: item.color }}
-                  ></div>
-                  <div>
-                    <div className="font-medium">{item.label}</div>
-                    <div className="text-sm text-gray-500">{item.range}</div>
+                { label: 'Good', color: '#22c55e', range: '0-50' },
+                { label: 'Moderate', color: '#eab308', range: '51-100' },
+                { label: 'Unhealthy (S)', color: '#f97316', range: '101-150' },
+                { label: 'Unhealthy', color: '#ef4444', range: '151-200' },
+                { label: 'Hazardous', color: '#7e0023', range: '201+' },
+              ].map(lvl => (
+                <div key={lvl.label} className="flex items-center justify-between group cursor-help">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: lvl.color, boxShadow: `0 0 10px ${lvl.color}40` }}></div>
+                    <span className="text-xs font-bold text-gray-300 transition-colors group-hover:text-white">{lvl.label}</span>
                   </div>
+                  <span className="text-[10px] font-mono text-gray-500">{lvl.range}</span>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Statistics */}
-          <div className={`p-6 rounded-2xl border ${
-            theme === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <h3 className="font-bold text-lg mb-4">Pollution Statistics</h3>
-            <div className="space-y-4">
-              {[
-                { label: 'Most Polluted', value: 'West Delhi', aqi: 312, color: '#7e0023' },
-                { label: 'Least Polluted', value: 'Dwarka', aqi: 132, color: '#ffde33' },
-                { label: 'City Average', value: 'All Delhi', aqi: 215, color: '#cc0033' },
-              ].map((stat, index) => (
-                <div key={index}>
-                  <div className="flex justify-between text-sm text-gray-500 mb-1">
-                    <span>{stat.label}</span>
-                    <span>AQI: {stat.aqi}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="h-2 rounded-full"
-                      style={{ 
-                        width: `${(stat.aqi / 500) * 100}%`,
-                        backgroundColor: stat.color
-                      }}
-                    ></div>
-                  </div>
-                  <div className="text-sm mt-1 font-medium">{stat.value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Data Table */}
-      <div className={`rounded-2xl border overflow-hidden ${
-        theme === 'dark' 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-200'
-      }`}>
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold">District-wise Pollution Data</h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            Real-time pollution levels across all Delhi districts
-          </p>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}>
-              <tr>
-                <th className="text-left py-3 px-6 text-gray-500 dark:text-gray-400 font-medium">District</th>
-                <th className="text-left py-3 px-6 text-gray-500 dark:text-gray-400 font-medium">AQI</th>
-                <th className="text-left py-3 px-6 text-gray-500 dark:text-gray-400 font-medium">PM2.5</th>
-                <th className="text-left py-3 px-6 text-gray-500 dark:text-gray-400 font-medium">PM10</th>
-                <th className="text-left py-3 px-6 text-gray-500 dark:text-gray-400 font-medium">NO₂</th>
-                <th className="text-left py-3 px-6 text-gray-500 dark:text-gray-400 font-medium">Status</th>
-                <th className="text-left py-3 px-6 text-gray-500 dark:text-gray-400 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {delhiDistricts.map(district => (
-                <tr 
-                  key={district.id} 
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer ${
-                    selectedDistrict?.id === district.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                  }`}
-                  onClick={() => setSelectedDistrict(district)}
-                >
-                  <td className="py-4 px-6">
-                    <div className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-3"
-                        style={{ backgroundColor: getPollutantColor(district.aqi, 'aqi') }}
-                      ></div>
-                      <span className="font-medium">{district.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="font-bold">{district.aqi}</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="font-medium">{district.pm25} µg/m³</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="font-medium">{district.pm10} µg/m³</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="font-medium">{district.no2} ppb</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      district.aqi <= 50 ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
-                      district.aqi <= 100 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
-                      district.aqi <= 150 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' :
-                      district.aqi <= 200 ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
-                      district.aqi <= 300 ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' :
-                      'bg-red-200 dark:bg-red-900/50 text-red-900 dark:text-red-300'
-                    }`}>
-                      {getAQILevel(district.aqi)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedDistrict(district);
-                      }}
-                      className="px-3 py-1 text-sm rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                    >
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
