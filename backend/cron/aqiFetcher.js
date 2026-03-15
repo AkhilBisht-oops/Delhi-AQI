@@ -76,8 +76,8 @@ const fetchLocationAQI = async (loc) => {
 // Main function to fetch and store AQI data
 const fetchAndStoreAQI = async () => {
   try {
-    const allLocations = [...delhiDistricts, ...worldCities];
-    console.log(`Starting global AQI sync for ${allLocations.length} locations...`);
+    const allLocations = [...delhiDistricts];
+    console.log(`Starting Delhi AQI sync for ${allLocations.length} locations...`);
     
     // Batch processing to respect API limits
     const batchSize = 5;
@@ -100,19 +100,19 @@ const fetchAndStoreAQI = async () => {
       console.log(`✅ Successfully stored AQI snapshots for ${allResults.length} locations`);
     }
   } catch (error) {
-    console.error('Error during global AQI sync:', error);
+    console.error('Error during Delhi AQI sync:', error);
   }
 };
 
 // Schedule to run every hour
 cron.schedule('0 * * * *', () => {
-  console.log('Running scheduled Global AQI fetch...');
+  console.log('Running scheduled Delhi AQI fetch...');
   fetchAndStoreAQI();
 });
 
 // Run immediately on startup
 fetchAndStoreAQI();
 
-console.log('Global AQI fetch scheduler active (hourly)');
+console.log('Delhi AQI fetch scheduler active (hourly)');
 
 module.exports = { fetchAndStoreAQI };

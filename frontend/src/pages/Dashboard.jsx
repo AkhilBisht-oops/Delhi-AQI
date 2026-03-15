@@ -107,30 +107,37 @@ const Dashboard = () => {
 
   const fetchGlobalData = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/aqi/global');
+      const res = await fetch('http://localhost:5000/api/aqi/latest');
       if (res.ok) {
-        const data = await res.json();
-        if (Object.keys(data).length > 0) setGlobalData(data);
+        const dataArray = await res.json();
+        if (dataArray && dataArray.length > 0) {
+            // Convert array back to object keyed by district name to match globalData format
+            const dataObj = {};
+            dataArray.forEach(item => {
+                dataObj[item.district] = item;
+            });
+            setGlobalData(dataObj);
+        }
       }
     } catch (err) {
-      console.log('Using fallback data');
+      console.log('Using fallback data', err);
     } finally {
       setLoading(false);
     }
   };
 
   const regionMap = {
-    asia: ['IN', 'CN', 'JP', 'KR', 'ID', 'TH', 'PK', 'BD', 'VN', 'PH', 'MY', 'SG', 'NP', 'LK', 'MM', 'KH'],
-    europe: ['GB', 'FR', 'DE', 'RU', 'IT', 'ES', 'PL', 'UA', 'NL', 'SE', 'NO', 'PT', 'GR', 'CZ', 'RO', 'HU', 'FI', 'DK', 'IE', 'CH', 'AT', 'BE'],
-    americas: ['US', 'CA', 'MX', 'BR', 'AR', 'CO', 'PE', 'CL'],
-    middleEast: ['SA', 'IR', 'IQ', 'AE', 'TR', 'IL', 'QA', 'KW'],
-    africa: ['EG', 'NG', 'ZA', 'KE', 'ET', 'GH', 'TZ', 'MA', 'DZ'],
-    oceania: ['AU', 'NZ'],
+    central: ['Central Delhi', 'New Delhi'],
+    north: ['North Delhi', 'North West Delhi'],
+    south: ['South Delhi', 'South East Delhi', 'South West Delhi'],
+    east: ['East Delhi', 'North East Delhi', 'Shahdara'],
+    west: ['West Delhi'],
   };
 
   const stats = useMemo(() => {
     if (!globalData) return { avg: 0, max: 0, min: 0, total: 0, worst: null, best: null, mostPollutedCountries: [] };
     const entries = Object.entries(globalData);
+    if (entries.length === 0) return { avg: 0, max: 0, min: 0, total: 0, worst: null, best: null, mostPollutedCountries: [] };
     const values = entries.map(([_, d]) => d.aqi);
     const sorted = [...entries].sort((a, b) => b[1].aqi - a[1].aqi);
     return {
@@ -141,8 +148,8 @@ const Dashboard = () => {
       worst: sorted[0],
       best: sorted[sorted.length - 1],
       mostPollutedCountries: sorted.slice(0, 10).map(([code, data]) => ({
-        name: data.city || code, aqi: data.aqi,
-        pm25: data.pm25 || Math.round(data.aqi * 0.7),
+        name: data.district || code, aqi: data.aqi,
+        pm25: data.pollutants?.pm25 || Math.round(data.aqi * 0.7),
         status: getCategory(data.aqi),
         trend: data.aqi > 150 ? 'up' : data.aqi < 50 ? 'down' : 'stable',
         code,
@@ -162,8 +169,8 @@ const Dashboard = () => {
       max: Math.max(...values), min: Math.min(...values), total: values.length,
       worst: sorted[0], best: sorted[sorted.length - 1],
       mostPollutedCountries: sorted.slice(0, 10).map(([code, data]) => ({
-        name: data.city || code, aqi: data.aqi,
-        pm25: data.pm25 || Math.round(data.aqi * 0.7),
+        name: data.district || code, aqi: data.aqi,
+        pm25: data.pollutants?.pm25 || Math.round(data.aqi * 0.7),
         status: getCategory(data.aqi),
         trend: data.aqi > 150 ? 'up' : data.aqi < 50 ? 'down' : 'stable',
         code,
@@ -182,13 +189,12 @@ const Dashboard = () => {
   }, [regionStats]);
 
   const regions = [
-    { id: 'all', label: '🌍 All' },
-    { id: 'asia', label: '🌏 Asia' },
-    { id: 'europe', label: '🌍 Europe' },
-    { id: 'americas', label: '🌎 Americas' },
-    { id: 'middleEast', label: '🕌 Middle East' },
-    { id: 'africa', label: '🌍 Africa' },
-    { id: 'oceania', label: '🏝️ Oceania' },
+    { id: 'all', label: '🏙️ All Delhi' },
+    { id: 'central', label: '🏛️ Central' },
+    { id: 'north', label: '⬆️ North' },
+    { id: 'south', label: '⬇️ South' },
+    { id: 'east', label: '➡️ East' },
+    { id: 'west', label: '⬅️ West' },
   ];
 
   return (
@@ -221,20 +227,20 @@ const Dashboard = () => {
               <span className="text-sm font-bold text-green-400 uppercase tracking-widest">Live Monitoring</span>
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent leading-tight mb-4">
-              {selectedRegion === 'all' ? 'World' : regions.find(r => r.id === selectedRegion)?.label.split(' ')[1]} Air Quality
+              {selectedRegion === 'all' ? 'Delhi' : regions.find(r => r.id === selectedRegion)?.label.split(' ')[1]} Air Quality
             </h1>
             <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-              Real-time pollution monitoring across <span className="text-white font-bold">{regionStats.total} countries</span>
+              Real-time pollution monitoring across <span className="text-white font-bold">{regionStats.total} locations</span>
             </p>
           </div>
           
           {/* Stats ribbon */}
           <div className="animate-fade-in-up flex flex-wrap justify-center gap-4 md:gap-8" style={{ animationDelay: '0.5s' }}>
             {[
-              { label: selectedRegion === 'all' ? 'Global Avg' : 'Region Avg', value: regionStats.avg, color: regionStats.avg > 100 ? '#ef4444' : regionStats.avg > 50 ? '#eab308' : '#22c55e' },
-              { label: 'Most Polluted', value: regionStats.max, color: '#ef4444', sub: regionStats.worst?.[1]?.city },
-              { label: 'Cleanest', value: regionStats.min, color: '#22c55e', sub: regionStats.best?.[1]?.city },
-              { label: 'Countries', value: regionStats.total, color: '#3b82f6' },
+              { label: selectedRegion === 'all' ? 'Delhi Avg' : 'Region Avg', value: regionStats.avg, color: regionStats.avg > 100 ? '#ef4444' : regionStats.avg > 50 ? '#eab308' : '#22c55e' },
+              { label: 'Most Polluted', value: regionStats.max, color: '#ef4444', sub: regionStats.worst?.[1]?.district || regionStats.worst?.[1]?.city },
+              { label: 'Cleanest', value: regionStats.min, color: '#22c55e', sub: regionStats.best?.[1]?.district || regionStats.best?.[1]?.city },
+              { label: 'Locations', value: regionStats.total, color: '#3b82f6' },
             ].map((s, i) => (
               <div key={i} className="glass-card px-5 py-3 text-center min-w-[120px]">
                 <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold">{s.label}</div>
@@ -257,10 +263,10 @@ const Dashboard = () => {
       <div className="px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { title: selectedRegion === 'all' ? 'Global Average' : 'Region Average', value: String(regionStats.avg), unit: 'AQI', icon: <Activity className="w-6 h-6 text-blue-400" />, delay: '0.1s' },
-            { title: 'Most Polluted', value: regionStats.worst ? String(regionStats.worst[1].aqi) : '--', unit: 'AQI', description: regionStats.worst?.[1]?.city, icon: <TrendingUp className="w-6 h-6 text-red-400" />, delay: '0.2s' },
-            { title: 'Cleanest Air', value: regionStats.best ? String(regionStats.best[1].aqi) : '--', unit: 'AQI', description: regionStats.best?.[1]?.city, icon: <Sparkles className="w-6 h-6 text-emerald-400" />, delay: '0.3s' },
-            { title: 'Countries', value: String(regionStats.total), description: selectedRegion === 'all' ? 'Tracked worldwide' : `Tracked in ${selectedRegion}`, icon: <Globe className="w-6 h-6 text-purple-400" />, delay: '0.4s' },
+            { title: selectedRegion === 'all' ? 'Delhi Average' : 'Region Average', value: String(regionStats.avg), unit: 'AQI', icon: <Activity className="w-6 h-6 text-blue-400" />, delay: '0.1s' },
+            { title: 'Most Polluted', value: regionStats.worst ? String(regionStats.worst[1].aqi) : '--', unit: 'AQI', description: regionStats.worst?.[1]?.district || regionStats.worst?.[1]?.city, icon: <TrendingUp className="w-6 h-6 text-red-400" />, delay: '0.2s' },
+            { title: 'Cleanest Air', value: regionStats.best ? String(regionStats.best[1].aqi) : '--', unit: 'AQI', description: regionStats.best?.[1]?.district || regionStats.best?.[1]?.city, icon: <Sparkles className="w-6 h-6 text-emerald-400" />, delay: '0.3s' },
+            { title: 'Locations', value: String(regionStats.total), description: selectedRegion === 'all' ? 'Tracked in Delhi' : `Tracked in ${selectedRegion}`, icon: <Globe className="w-6 h-6 text-purple-400" />, delay: '0.4s' },
           ].map((stat, i) => (
             <div key={i} className="animate-fade-in-up" style={{ animationDelay: stat.delay }}>
               <StatsCard {...stat} />
@@ -294,7 +300,7 @@ const Dashboard = () => {
         {/* AQI Overview — open by default */}
         <Section 
           title="Air Quality Index" 
-          subtitle={`${regionStats.total} countries aggregated`}
+          subtitle={`${regionStats.total} locations aggregated`}
           icon={<Activity className="w-5 h-5" />}
           accentColor="blue"
           defaultOpen={true}
@@ -306,7 +312,7 @@ const Dashboard = () => {
         {/* Most Polluted — horizontal cards */}
         <Section 
           title="Most Polluted Cities" 
-          subtitle="Click to see worldwide pollution rankings"
+          subtitle="Click to see Delhi pollution rankings"
           icon={<AlertTriangle className="w-5 h-5" />}
           accentColor="red"
           badge={{ text: `${regionStats.mostPollutedCountries.filter(c => c.aqi > 150).length} alerts`, className: 'bg-red-500/20 text-red-400 border border-red-500/20' }}
@@ -366,7 +372,7 @@ const Dashboard = () => {
         {/* Alerts */}
         <Section 
           title="Active Health Alerts" 
-          subtitle="Worldwide health advisories"
+          subtitle="Delhi health advisories"
           icon={<Shield className="w-5 h-5" />}
           accentColor="orange"
           badge={{ text: 'URGENT', className: 'bg-red-500/20 text-red-400 border border-red-500/20 animate-pulse' }}
@@ -376,7 +382,7 @@ const Dashboard = () => {
 
         {/* Rankings Table */}
         <Section 
-          title="Country Rankings" 
+          title="Area Rankings" 
           subtitle="Full pollution leaderboard"
           icon={<BarChart3 className="w-5 h-5" />}
           accentColor="purple"
@@ -391,7 +397,7 @@ const Dashboard = () => {
         {/* Footer */}
         <div className="glass-card p-4 text-center text-sm text-gray-500">
           <p>⚠️ Health Advisory: When AQI exceeds 200, everyone should reduce outdoor exposure.</p>
-          <p className="mt-1 text-gray-600">Data updates every 2 minutes • {stats.total} countries • {new Date().toLocaleTimeString()}</p>
+          <p className="mt-1 text-gray-600">Data updates every 2 minutes • {stats.total} locations • {new Date().toLocaleTimeString()}</p>
         </div>
       </div>
     </div>

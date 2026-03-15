@@ -21,7 +21,7 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Real-time worldwide air quality monitoring with 3D visualization. Tracking pollution across 65+ countries.
+              Real-time Delhi air quality monitoring with 3D visualization. Tracking pollution across Delhi NCR.
             </p>
             <div className="flex gap-3 mt-4">
               <a href="#" className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all text-gray-500 hover:text-white">
@@ -42,7 +42,7 @@ const Footer = () => {
             <ul className="space-y-2.5">
               {[
                 { name: 'Dashboard', href: '/' },
-                { name: 'Global AQI', href: '/globe' },
+                { name: 'Delhi AQI', href: '/globe' },
                 { name: 'Heatmap', href: '/heatmap' },
                 { name: 'Trends', href: '/trends' },
                 { name: 'Pollution Tips', href: '/tips' },
@@ -103,7 +103,7 @@ const Footer = () => {
         {/* Bottom bar */}
         <div className="py-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} AQI Pro. Real-time pollution monitoring worldwide.
+            © {new Date().getFullYear()} AQI Pro. Real-time pollution monitoring for Delhi NCR.
           </p>
           <p className="text-xs text-gray-600 flex items-center gap-1">
             Made with <Heart className="w-3 h-3 text-red-500" /> for cleaner air

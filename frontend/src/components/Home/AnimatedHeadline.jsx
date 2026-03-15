@@ -35,7 +35,7 @@ export default function AnimatedHeadline() {
   const typedText = useTypingAnimation([
     'Monitoring the Planet\'s Air in Real Time',
     'Breathe Smarter, Live Better',
-    'Track Air Quality Across 65 Countries',
+    'Track Air Quality Across Delhi NCR',
     'Protect Your Health Today',
   ]);
 
@@ -53,7 +53,7 @@ export default function AnimatedHeadline() {
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         >
           <span className="block bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent drop-shadow-2xl">
-            World Air
+            Delhi Air
           </span>
           <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent mt-1 md:mt-3">
             Quality
@@ -69,7 +69,7 @@ export default function AnimatedHeadline() {
         transition={{ duration: 0.8, delay: 0.7 }}
       >
         Real-time pollution monitoring across{' '}
-        <span className="text-white font-bold">65 countries</span>
+        <span className="text-white font-bold">Delhi NCR Regions</span>
       </motion.p>
 
       {/* Typing text line */}

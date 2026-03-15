@@ -73,11 +73,9 @@ const Trends = () => {
       if (data.districts && data.districts.length > 0) {
         // Categorize districts: Delhi vs Global
         const delhiDistricts = data.districts.filter(d => 
-          d.toLowerCase().includes('delhi') || d.toLowerCase().includes('shahdara')
+          !d.toLowerCase().includes('global') // assuming backend only returns delhi districts now
         ).sort();
-        const globalCities = data.districts.filter(d => 
-          !delhiDistricts.includes(d)
-        ).sort();
+        const globalCities = [];
         
         setDistricts({ delhi: delhiDistricts, global: globalCities });
         
@@ -155,14 +153,9 @@ const Trends = () => {
             <select
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
-                className="appearance-none bg-white/5 border border-white/10 text-white pl-6 pr-12 py-3 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer min-w-[200px] hover:bg-white/10 transition-all shadow-xl"
+                className="appearance-none bg-[#0f172a] border border-white/10 text-white pl-6 pr-12 py-3 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer min-w-[200px] hover:bg-white/10 transition-all shadow-xl"
             >
-                <optgroup label="Local (Delhi)" className="bg-[#0f172a] text-blue-400 font-black uppercase text-[10px] tracking-widest">
-                    {districts.delhi.map(d => <option key={d} value={d} className="bg-[#0f172a] text-white text-sm font-bold">{d}</option>)}
-                </optgroup>
-                <optgroup label="Global Cities" className="bg-[#0f172a] text-purple-400 font-black uppercase text-[10px] tracking-widest">
-                    {districts.global.map(d => <option key={d} value={d} className="bg-[#0f172a] text-white text-sm font-bold">{d}</option>)}
-                </optgroup>
+                {districts.delhi.map(d => <option key={d} value={d} className="bg-[#0f172a] text-white text-sm font-bold">{d}</option>)}
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-white transition-colors" />
           </div>

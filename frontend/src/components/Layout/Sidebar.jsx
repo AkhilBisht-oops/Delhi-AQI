@@ -1,16 +1,17 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-
-import { 
-  LayoutDashboard, 
-  Map, 
-  TrendingUp, 
-  Lightbulb,
-  Bell,
+import { useTheme } from '../../contexts/ThemeContext';
+import {
+  Activity,
+  TrendingUp,
+  Map,
+  Settings,
+  LogOut,
+  Moon,
+  Sun,
   Shield,
-  Users,
-  Globe
+  Bell
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -24,16 +25,16 @@ const Sidebar = ({ isOpen, onClose }) => {
       description: 'Real-time monitoring'
     },
     { 
-      name: 'Global AQI', 
+      name: 'Delhi AQI', 
       href: '/globe', 
       icon: <Globe className="w-5 h-5" />,
-      description: '3D World pollution map'
+      description: 'Delhi pollution map'
     },
     { 
-      name: 'Heatmap', 
+      name: 'Detailed Area Lists', 
       href: '/heatmap', 
       icon: <Map className="w-5 h-5" />,
-      description: 'Pollution visualization'
+      description: 'Detailed area metrics'
     },
     { 
       name: 'Trends', 

@@ -1,38 +1,37 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import GlobeScene from '../components/Globe/GlobeScene';
 import { 
   getAQIColor, 
   getAQICategory, 
-  getAQIEmoji, 
   AQI_LEGEND, 
-  FALLBACK_GLOBAL_AQI,
-  COUNTRY_CENTROIDS 
+  FALLBACK_GLOBAL_AQI
 } from '../components/Globe/globeUtils';
-import { Globe as GlobeIcon, Wind, Activity, Search, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { Map, Activity, Search, Info } from 'lucide-react';
 
 const GlobeView = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [aqiData, setAqiData] = useState(FALLBACK_GLOBAL_AQI);
-  const [selectedCountry, setSelectedCountry] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [showAllCountries, setShowAllCountries] = useState(false);
 
-  // Fetch global AQI data
+  // Fetch Delhi AQI data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/aqi/global');
+        const res = await fetch('http://localhost:5000/api/aqi/latest');
         if (res.ok) {
-          const data = await res.json();
-          if (Object.keys(data).length > 0) {
-            setAqiData(prev => ({ ...prev, ...data }));
+          const dataArray = await res.json();
+          if (dataArray && dataArray.length > 0) {
+            const dataObj = {};
+            dataArray.forEach(item => {
+              dataObj[item.district] = item;
+            });
+            setAqiData(prev => ({ ...prev, ...dataObj }));
           }
         }
       } catch (err) {
-        console.log('Using fallback AQI data for globe');
+        console.log('Using fallback AQI data');
       } finally {
         setLoading(false);
       }
@@ -42,438 +41,203 @@ const GlobeView = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Sorted countries for ranking
-  const sortedCountries = useMemo(() => {
+  // Sorted districts for ranking
+  const sortedDistricts = useMemo(() => {
     return Object.entries(aqiData)
       .map(([code, data]) => ({
         code,
-        name: COUNTRY_CENTROIDS[code]?.name || code,
+        name: data.district || code,
         aqi: data.aqi,
-        city: data.city,
         category: getAQICategory(data.aqi),
       }))
       .sort((a, b) => b.aqi - a.aqi);
   }, [aqiData]);
 
   // Filtered by search
-  const filteredCountries = useMemo(() => {
-    if (!searchQuery) return sortedCountries;
+  const filteredDistricts = useMemo(() => {
+    if (!searchQuery) return sortedDistricts;
     const q = searchQuery.toLowerCase();
-    return sortedCountries.filter(c => 
-      c.name.toLowerCase().includes(q) || 
-      c.code.toLowerCase().includes(q)
+    return sortedDistricts.filter(c => 
+      c.name.toLowerCase().includes(q)
     );
-  }, [sortedCountries, searchQuery]);
-
-  const displayedCountries = showAllCountries ? filteredCountries : filteredCountries.slice(0, 10);
+  }, [sortedDistricts, searchQuery]);
 
   // Stats
   const stats = useMemo(() => {
     const values = Object.values(aqiData).map(d => d.aqi);
     return {
-      avg: Math.round(values.reduce((a, b) => a + b, 0) / values.length),
-      max: Math.max(...values),
-      min: Math.min(...values),
+      avg: Math.round(values.reduce((a, b) => a + b, 0) / values.length) || 0,
+      max: Math.max(...values, 0),
+      min: Math.min(...values, 0),
       total: values.length,
-      good: values.filter(v => v <= 50).length,
-      hazardous: values.filter(v => v > 300).length,
     };
   }, [aqiData]);
 
   return (
-    <div style={{
-      minHeight: '100vh',
+    <div className={`min-h-[calc(100vh-80px)] ${isDark ? 'bg-[#050a18]' : 'bg-[#0a1628]'} text-white -mx-4 sm:-mx-6 lg:-mx-8 -mt-8 p-6 lg:p-10`} style={{
       background: isDark 
         ? 'linear-gradient(135deg, #050a18 0%, #0a1628 50%, #0d1f3c 100%)'
         : 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #122a4f 100%)',
-      color: '#ffffff',
-      padding: 0,
-      margin: '-2rem',
-      marginTop: '-2rem',
-      overflow: 'hidden',
     }}>
-      {/* Header */}
-      <div style={{
-        padding: '20px 30px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        background: 'rgba(10, 15, 30, 0.6)',
-        backdropFilter: 'blur(20px)',
-        zIndex: 10,
-        position: 'relative',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
-          }}>
-            <GlobeIcon size={24} color="white" />
-          </div>
-          <div>
-            <h1 style={{ 
-              margin: 0, 
-              fontSize: '24px', 
-              fontWeight: 800,
-              background: 'linear-gradient(90deg, #60a5fa, #a78bfa)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              letterSpacing: '-0.5px',
-            }}>
-              Global Air Quality Index
-            </h1>
-            <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
-              Real-time worldwide pollution monitoring • {stats.total} countries tracked
-            </p>
-          </div>
+      
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 mt-8">
+        <div>
+           <div className="flex items-center gap-3 mb-2">
+             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 border border-blue-400/30">
+               <Map size={24} className="text-white" />
+             </div>
+             <div>
+               <h1 className="text-3xl font-black bg-gradient-to-r from-blue-400 via-white to-cyan-400 bg-clip-text text-transparent tracking-tight">
+                 Delhi Area Reports
+               </h1>
+               <div className="flex items-center gap-2 mt-1">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse hidden sm:block"></div>
+                 <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+                   {stats.total} Active Monitoring Stations
+                 </p>
+               </div>
+             </div>
+           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            borderRadius: '20px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            fontSize: '13px',
-          }}>
-            <div style={{
-              width: '8px', height: '8px', borderRadius: '50%',
-              background: '#22c55e',
-              boxShadow: '0 0 8px #22c55e',
-              animation: 'pulse 2s infinite',
-            }} />
-            LIVE
-          </div>
-          <div style={{
-            padding: '8px 16px',
-            borderRadius: '20px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            fontSize: '13px',
-            color: 'rgba(255,255,255,0.6)',
-          }}>
-            Avg AQI: <strong style={{ color: getAQIColor(stats.avg) }}>{stats.avg}</strong>
-          </div>
+
+        <div className="flex flex-wrap gap-4">
+            <div className="glass-card px-6 py-3 border-white/5 flex flex-col items-center min-w-[120px]">
+                <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">City Average</span>
+                <span className="text-3xl font-black leading-none" style={{ color: getAQIColor(stats.avg), textShadow: `0 0 20px ${getAQIColor(stats.avg)}40` }}>
+                    {stats.avg}
+                </span>
+            </div>
+            <div className="glass-card px-6 py-3 border-white/5 flex flex-col items-center min-w-[120px]">
+                <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Most Polluted</span>
+                <span className="text-3xl font-black leading-none text-red-500" style={{ textShadow: `0 0 20px rgba(239,68,68,0.3)` }}>
+                    {stats.max}
+                </span>
+            </div>
+            <div className="glass-card px-6 py-3 border-white/5 flex flex-col items-center min-w-[120px]">
+                <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Cleanest</span>
+                <span className="text-3xl font-black leading-none text-emerald-500" style={{ textShadow: `0 0 20px rgba(16,185,129,0.3)` }}>
+                    {stats.min}
+                </span>
+            </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{
-        display: 'flex',
-        height: 'calc(100vh - 88px)',
-        position: 'relative',
-      }}>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
         
-        {/* 3D Globe */}
-        <div style={{ 
-          flex: 1,
-          position: 'relative',
-          minHeight: '500px',
-        }}>
-          <GlobeScene 
-            aqiData={aqiData} 
-            onSelectCountry={setSelectedCountry}
-          />
-          
-          {/* Floating stats cards */}
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '20px',
-            display: 'flex',
-            gap: '12px',
-            zIndex: 10,
-          }}>
-            {[
-              { label: 'Cleanest', value: stats.min, icon: '🌿' },
-              { label: 'Average', value: stats.avg, icon: '🌍' },
-              { label: 'Most Polluted', value: stats.max, icon: '⚠️' },
-            ].map((stat, i) => (
-              <div key={i} style={{
-                padding: '12px 18px',
-                background: 'rgba(10, 15, 30, 0.85)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '14px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                minWidth: '120px',
-              }}>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>
-                  {stat.icon} {stat.label}
-                </div>
-                <div style={{ 
-                  fontSize: '22px', 
-                  fontWeight: 800,
-                  color: getAQIColor(stat.value),
-                  textShadow: `0 0 20px ${getAQIColor(stat.value)}40`,
-                }}>
-                  {stat.value}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Left Column: Legend & Search */}
+        <div className="xl:col-span-1 space-y-6">
+            {/* Search Box */}
+            <div className="glass-card p-6 border-white/5">
+               <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                   <Search size={16} className="text-blue-400" /> Search Areas
+               </h3>
+               <div className="relative">
+                   <input
+                        type="text"
+                        placeholder="Search for a district..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-[#0a1628] border border-white/10 text-white px-4 py-3 pl-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium placeholder:text-gray-600"
+                    />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+               </div>
+            </div>
 
-        {/* Right Panel */}
-        <div style={{
-          width: '360px',
-          background: 'rgba(10, 15, 30, 0.7)',
-          backdropFilter: 'blur(30px)',
-          borderLeft: '1px solid rgba(255,255,255,0.08)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflowY: 'auto',
-        }}>
-          
-          {/* Selected Country Detail */}
-          {selectedCountry && (
-            <div style={{
-              padding: '20px',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-              background: 'rgba(255,255,255,0.03)',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <div style={{
-                  width: '40px', height: '40px', borderRadius: '10px',
-                  background: `${getAQIColor(selectedCountry.aqi)}20`,
-                  border: `2px solid ${getAQIColor(selectedCountry.aqi)}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '18px',
-                }}>
-                  {getAQIEmoji(selectedCountry.aqi)}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '16px' }}>{selectedCountry.name}</div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                    {selectedCountry.city && `📍 ${selectedCountry.city}`}
-                  </div>
-                </div>
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px',
-                borderRadius: '12px',
-                background: `${getAQIColor(selectedCountry.aqi)}15`,
-                border: `1px solid ${getAQIColor(selectedCountry.aqi)}30`,
-              }}>
-                <div>
-                  <div style={{ fontSize: '32px', fontWeight: 800, color: getAQIColor(selectedCountry.aqi) }}>
-                    {selectedCountry.aqi ?? 'N/A'}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>US AQI</div>
-                </div>
-                <div style={{
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  background: `${getAQIColor(selectedCountry.aqi)}25`,
-                  color: getAQIColor(selectedCountry.aqi),
-                  fontSize: '13px',
-                  fontWeight: 600,
-                }}>
-                  {getAQICategory(selectedCountry.aqi)}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Search */}
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 14px',
-              borderRadius: '10px',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}>
-              <Search size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
-              <input
-                type="text"
-                placeholder="Search countries..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  outline: 'none',
-                  color: 'white',
-                  fontSize: '14px',
-                  width: '100%',
-                }}
-              />
-            </div>
-          </div>
-
-          {/* AQI Legend */}
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ 
-              fontSize: '13px', 
-              fontWeight: 700, 
-              color: 'rgba(255,255,255,0.5)',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}>
-              <Info size={14} /> AQI Scale
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {AQI_LEGEND.map((item, i) => (
-                <div key={i} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.03)',
-                  fontSize: '12px',
-                }}>
-                  <div style={{
-                    width: '18px', height: '18px',
-                    borderRadius: '4px',
-                    background: item.color,
-                    flexShrink: 0,
-                    boxShadow: `0 0 8px ${item.color}40`,
-                  }} />
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontWeight: 600 }}>{item.range}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: '6px' }}>
-                      {item.label}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Country Rankings */}
-          <div style={{ padding: '16px 20px', flex: 1 }}>
-            <div style={{ 
-              fontSize: '13px', 
-              fontWeight: 700, 
-              color: 'rgba(255,255,255,0.5)',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}>
-              <Activity size={14} /> Most Polluted Countries
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {displayedCountries.map((country, i) => (
-                <div
-                  key={country.code}
-                  onClick={() => setSelectedCountry(country)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    background: selectedCountry?.code === country.code
-                      ? 'rgba(255,255,255,0.08)' 
-                      : 'rgba(255,255,255,0.02)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    border: selectedCountry?.code === country.code
-                      ? `1px solid ${getAQIColor(country.aqi)}40`
-                      : '1px solid transparent',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 
-                    selectedCountry?.code === country.code ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)'}
-                >
-                  <div style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '6px',
-                    background: 'rgba(255,255,255,0.05)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    color: 'rgba(255,255,255,0.4)',
-                  }}>
-                    {i + 1}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 600 }}>{country.name}</div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-                      {country.city}
+            {/* Scale Legend */}
+            <div className="glass-card p-6 border-white/5 hidden md:block">
+              <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                 <Info size={16} className="text-blue-400" /> AQI Scale Reference
+              </h3>
+              <div className="space-y-3">
+                {AQI_LEGEND.map((item, i) => (
+                  <div key={i} className="flex grid grid-cols-12 items-center gap-3 p-2 rounded-lg bg-white/[0.02] border border-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                    <div className="col-span-2 w-6 h-6 rounded-md flex-shrink-0" style={{ background: item.color, boxShadow: `0 0 10px ${item.color}40` }} />
+                    <div className="col-span-10 flex flex-col">
+                        <span className="text-xs font-bold text-white">{item.range}</span>
+                        <span className="text-[10px] text-gray-400">{item.label}</span>
                     </div>
                   </div>
-                  <div style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    background: `${getAQIColor(country.aqi)}20`,
-                    color: getAQIColor(country.aqi),
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    minWidth: '42px',
-                    textAlign: 'center',
-                  }}>
-                    {country.aqi}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-            
-            {filteredCountries.length > 10 && (
-              <button
-                onClick={() => setShowAllCountries(!showAllCountries)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  marginTop: '8px',
-                  borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.6)',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-              >
-                {showAllCountries ? (
-                  <><ChevronUp size={14} /> Show Less</>
+        </div>
+
+        {/* Right Column: Grid List of Areas */}
+        <div className="xl:col-span-3">
+             <div className="glass-card p-6 md:p-8 border-white/5 min-h-[500px]">
+                <div className="flex justify-between items-end mb-6 border-b border-white/5 pb-4">
+                    <h2 className="text-lg font-black text-white flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-blue-400" />
+                        Area Rankings
+                    </h2>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{filteredDistricts.length} results found</span>
+                </div>
+
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-blue-400 font-bold uppercase tracking-widest text-xs mt-4 animate-pulse">Synchronizing Details...</p>
+                    </div>
+                ) : filteredDistricts.length === 0 ? (
+                    <div className="text-center py-20">
+                        <p className="text-gray-500 font-bold">No areas found matching "{searchQuery}"</p>
+                    </div>
                 ) : (
-                  <><ChevronDown size={14} /> Show All {filteredCountries.length} Countries</>
+                    <div className="flex flex-col gap-3">
+                        {filteredDistricts.map((district, idx) => (
+                            <div 
+                                key={district.code}
+                                className="group relative flex items-center justify-between p-4 rounded-xl bg-white/[0.01] hover:bg-white/[0.04] border border-white/[0.03] hover:border-white/[0.1] transition-all duration-300"
+                            >
+                                {/* Left side: Rank & Name */}
+                                <div className="flex items-center gap-4 min-w-[200px]">
+                                    <div className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-xs font-black text-gray-500 group-hover:text-white transition-colors">
+                                        {idx + 1}
+                                    </div>
+                                    <h3 className="font-bold text-white text-[15px] tracking-tight">{district.name}</h3>
+                                </div>
+
+                                {/* Middle: Minimal Health Bar */}
+                                <div className="hidden md:flex flex-1 max-w-[250px] mx-8 flex-col justify-center">
+                                    <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full rounded-full transition-all duration-1000 ease-out"
+                                            style={{ 
+                                                width: `${Math.min((district.aqi / 300) * 100, 100)}%`,
+                                                backgroundColor: getAQIColor(district.aqi),
+                                                boxShadow: `0 0 10px ${getAQIColor(district.aqi)}`
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Right side: AQI Data & Status Pill */}
+                                <div className="flex items-center gap-6">
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-2xl font-black leading-none tracking-tighter" style={{ color: getAQIColor(district.aqi) }}>
+                                            {district.aqi}
+                                        </span>
+                                        <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">PM2.5</span>
+                                    </div>
+
+                                    <div className="w-[110px] flex justify-end">
+                                        <div className="w-full px-2 py-1.5 rounded-[6px] text-[10px] font-black uppercase tracking-widest border text-center" style={{ 
+                                            backgroundColor: `${getAQIColor(district.aqi)}10`,
+                                            borderColor: `${getAQIColor(district.aqi)}30`,
+                                            color: getAQIColor(district.aqi)
+                                        }}>
+                                            {district.category}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 )}
-              </button>
-            )}
-          </div>
+             </div>
         </div>
       </div>
-
-      {/* Pulse animation */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 };

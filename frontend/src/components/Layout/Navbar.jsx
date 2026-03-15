@@ -12,15 +12,18 @@ import {
   X,
   Bell,
   AlertCircle,
-  Zap
+  Zap,
+  Home, // Added for new navLinks
+  BarChart2, // Added for new navLinks
+  Activity // Added for new navLinks
 } from 'lucide-react';
 
-const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { name: 'Global AQI', href: '/globe', icon: <Globe className="w-4 h-4" /> },
-  { name: 'Heatmap', href: '/heatmap', icon: <Map className="w-4 h-4" /> },
-  { name: 'Trends', href: '/trends', icon: <TrendingUp className="w-4 h-4" /> },
-  { name: 'Pollution Tips', href: '/tips', icon: <Lightbulb className="w-4 h-4" /> },
+const navLinks = [
+  { name: 'Dashboard', path: '/dashboard', icon: <Home size={18} /> },
+  { name: 'Trends', path: '/trends', icon: <BarChart2 size={18} /> },
+  { name: 'Delhi Reports', path: '/globe', icon: <Map size={18} /> },
+  { name: 'Heatmap', path: '/heatmap', icon: <Activity size={18} /> },
+  { name: 'Pollution Tips', path: '/tips', icon: <Lightbulb size={18} /> }, // Changed href to path and icon size
 ];
 
 const Navbar = () => {
@@ -72,10 +75,10 @@ const Navbar = () => {
           {/* Center Navigation — pill container */}
           <nav className="hidden lg:flex items-center">
             <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
-              {navItems.map(item => (
+              {navLinks.map(item => (
                 <NavLink
                   key={item.name}
-                  to={item.href}
+                  to={item.path}
                   className={({ isActive }) =>
                     `relative flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300 ${
                       isActive
@@ -141,10 +144,10 @@ const Navbar = () => {
       }`}>
         <div className="border-t border-white/5 mt-2">
           <nav className="max-w-7xl mx-auto px-4 py-3 space-y-1">
-            {navItems.map(item => (
+            {navLinks.map(item => (
               <NavLink
                 key={item.name}
-                to={item.href}
+                to={item.path}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${

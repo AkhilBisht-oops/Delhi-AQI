@@ -31,8 +31,8 @@ export default function About() {
           </span>
         </h1>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
-          AQI Pro is a global air quality intelligence platform providing real-time pollution data,
-          predictive analytics, and actionable health insights across 65+ countries.
+          AQI Pro is a comprehensive Delhi air quality intelligence platform providing real-time pollution data,
+          predictive analytics, and actionable health insights across Delhi NCR areas.
         </p>
       </motion.div>
 
@@ -42,7 +42,7 @@ export default function About() {
           {
             icon: <Shield className="w-6 h-6" />,
             title: 'Our Mission',
-            desc: 'Empowering communities worldwide with transparent, real-time air quality data to protect public health and drive environmental action.',
+            desc: 'Empowering communities in Delhi with transparent, real-time air quality data to protect public health and drive environmental action.',
             color: 'text-blue-400',
             glow: 'rgba(59,130,246,0.1)',
             border: 'border-blue-500/15',
@@ -88,7 +88,7 @@ export default function About() {
         transition={{ duration: 0.6, delay: 0.4 }}
       >
         {[
-          { label: 'Countries', value: '65+', color: 'text-blue-400' },
+          { label: 'Areas', value: '11+', color: 'text-blue-400' },
           { label: 'Monitoring Stations', value: '12K+', color: 'text-purple-400' },
           { label: 'Daily Users', value: '500K+', color: 'text-cyan-400' },
           { label: 'Data Points/Day', value: '10M+', color: 'text-emerald-400' },

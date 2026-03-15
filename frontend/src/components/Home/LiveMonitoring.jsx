@@ -99,7 +99,7 @@ export default function LiveMonitoring() {
 
   const cards = [
     {
-      label: 'Global Avg AQI',
+      label: 'Delhi Avg AQI',
       value: stats.avg,
       color: stats.avg > 100 ? '#ef4444' : stats.avg > 50 ? '#eab308' : '#22c55e',
       icon: <Activity className="w-5 h-5" />,
@@ -122,7 +122,7 @@ export default function LiveMonitoring() {
       glow: 'rgba(34,197,94,0.15)',
     },
     {
-      label: 'Countries Covered',
+      label: 'Areas Covered',
       value: stats.total,
       color: '#3b82f6',
       icon: <Globe className="w-5 h-5" />,
@@ -150,11 +150,11 @@ export default function LiveMonitoring() {
           </div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-3">
-            World Air Quality
+            Delhi Air Quality
           </h2>
           <p className="text-gray-400 text-base md:text-lg max-w-xl mx-auto">
             Real-time pollution monitoring across{' '}
-            <span className="text-white font-semibold">65 countries</span>
+            <span className="text-white font-semibold">Delhi NCR Regions</span>
           </p>
         </motion.div>
 

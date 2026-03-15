@@ -153,7 +153,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {[
                 {
-                  label: 'Global AQI',
+                  label: 'Delhi AQI',
                   desc: '3D interactive globe',
                   href: '/globe',
                   icon: <Globe className="w-5 h-5" />,
@@ -223,7 +223,7 @@ export default function HomePage() {
               <span className="text-sm font-bold text-white">AQI Pro</span>
             </div>
             <p className="text-xs text-gray-500">
-              © 2026 AQI Pro. Global Air Quality Monitoring Platform.
+              © 2026 AQI Pro. Delhi Air Quality Monitoring Platform.
             </p>
             <div className="flex gap-4">
               {['Privacy', 'Terms', 'Support'].map((t) => (

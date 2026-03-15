@@ -5,24 +5,15 @@ const LiveMap = () => {
   // Global pollution hotspots
   const hotspots = [
     // Asia
-    { top: '28%', left: '72%', color: '#cc0033', size: 14, label: 'Delhi', delay: 0 },
-    { top: '30%', left: '77%', color: '#ff9933', size: 10, label: 'Beijing', delay: 0.3 },
-    { top: '32%', left: '82%', color: '#ffde33', size: 9, label: 'Tokyo', delay: 0.6 },
-    { top: '42%', left: '75%', color: '#ff9933', size: 11, label: 'Bangkok', delay: 0.8 },
-    // Europe
-    { top: '22%', left: '47%', color: '#ffde33', size: 8, label: 'London', delay: 0.4 },
-    { top: '23%', left: '49%', color: '#00e400', size: 7, label: 'Paris', delay: 0.5 },
-    // Middle East
-    { top: '33%', left: '57%', color: '#cc0033', size: 10, label: 'Dubai', delay: 1.0 },
-    // Africa
-    { top: '38%', left: '50%', color: '#ff9933', size: 11, label: 'Cairo', delay: 0.7 },
-    { top: '52%', left: '48%', color: '#ffde33', size: 9, label: 'Lagos', delay: 1.2 },
-    // Americas
-    { top: '30%', left: '22%', color: '#00e400', size: 8, label: 'New York', delay: 0.2 },
-    { top: '38%', left: '20%', color: '#ff9933', size: 10, label: 'Mexico City', delay: 0.9 },
-    { top: '62%', left: '28%', color: '#ffde33', size: 9, label: 'São Paulo', delay: 1.1 },
-    // Oceania
-    { top: '68%', left: '85%', color: '#00e400', size: 7, label: 'Sydney', delay: 1.3 },
+    { top: '28%', left: '72%', color: '#cc0033', size: 14, label: 'Central Delhi', delay: 0 },
+    { top: '30%', left: '77%', color: '#ff9933', size: 10, label: 'North Delhi', delay: 0.3 },
+    { top: '32%', left: '82%', color: '#ffde33', size: 9, label: 'South Delhi', delay: 0.6 },
+    { top: '42%', left: '75%', color: '#ff9933', size: 11, label: 'East Delhi', delay: 0.8 },
+    { top: '22%', left: '47%', color: '#ffde33', size: 8, label: 'West Delhi', delay: 0.4 },
+    { top: '23%', left: '49%', color: '#00e400', size: 7, label: 'New Delhi', delay: 0.5 },
+    { top: '33%', left: '57%', color: '#cc0033', size: 10, label: 'Shahdara', delay: 1.0 },
+    { top: '38%', left: '50%', color: '#ff9933', size: 11, label: 'North West Delhi', delay: 0.7 },
+    { top: '52%', left: '48%', color: '#ffde33', size: 9, label: 'South West Delhi', delay: 1.2 },
   ];
 
   return (
@@ -77,9 +68,9 @@ const LiveMap = () => {
           <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-blue-500/15 to-purple-500/15 flex items-center justify-center border border-blue-500/15 animate-float">
             <Globe className="w-7 h-7 text-blue-400" />
           </div>
-          <h3 className="text-base font-bold text-white mb-1">Worldwide Pollution Map</h3>
+          <h3 className="text-base font-bold text-white mb-1">Delhi Pollution Map</h3>
           <p className="text-gray-500 text-xs">
-            Hover hotspots • Visit Globe page for full 3D view
+            Hover hotspots • Visit Map page for full views
           </p>
         </div>
       </div>

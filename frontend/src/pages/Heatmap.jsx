@@ -32,42 +32,59 @@ const Heatmap = () => {
   const [activePoint, setActivePoint] = useState(null);
 
   const regions = [
-    { id: 'world', label: '🌎 World', center: [20, 0], zoom: 2 },
-    { id: 'asia', label: '🌏 Asia', center: [34, 100], zoom: 4 },
-    { id: 'europe', label: '🌍 Europe', center: [54, 15], zoom: 4 },
-    { id: 'americas', label: '🌎 Americas', center: [15, -80], zoom: 3 },
-    { id: 'africa', label: '🌍 Africa', center: [2, 20], zoom: 3 },
-    { id: 'oceania', label: '🏝️ Oceania', center: [-25, 135], zoom: 4 },
+    { id: 'all', label: '🏙️ All Delhi', center: [28.6139, 77.2090], zoom: 10 },
+    { id: 'central', label: '🏛️ Central', center: [28.6358, 77.2245], zoom: 11 },
+    { id: 'north', label: '⬆️ North', center: [28.7041, 77.1025], zoom: 11 },
+    { id: 'south', label: '⬇️ South', center: [28.5355, 77.2500], zoom: 11 },
+    { id: 'east', label: '➡️ East', center: [28.6692, 77.3154], zoom: 11 },
+    { id: 'west', label: '⬅️ West', center: [28.6562, 77.1000], zoom: 11 },
   ];
 
   useEffect(() => {
-    fetchGlobalData();
-    const interval = setInterval(fetchGlobalData, 180000); // 3 mins
+    fetchDelhiData();
+    const interval = setInterval(fetchDelhiData, 180000); // 3 mins
     return () => clearInterval(interval);
   }, []);
 
-  const fetchGlobalData = async () => {
+  const delhiCoordinates = {
+    'Central Delhi': { lat: 28.6358, lng: 77.2245 },
+    'North Delhi': { lat: 28.7041, lng: 77.1025 },
+    'South Delhi': { lat: 28.5355, lng: 77.2500 },
+    'East Delhi': { lat: 28.6692, lng: 77.3154 },
+    'West Delhi': { lat: 28.6562, lng: 77.1000 },
+    'New Delhi': { lat: 28.6139, lng: 77.2090 },
+    'North East Delhi': { lat: 28.7154, lng: 77.2842 },
+    'North West Delhi': { lat: 28.7272, lng: 77.0688 },
+    'South East Delhi': { lat: 28.5562, lng: 77.2760 },
+    'South West Delhi': { lat: 28.5820, lng: 77.0707 },
+    'Shahdara': { lat: 28.6714, lng: 77.2862 }
+  };
+
+  const fetchDelhiData = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/aqi/global');
-      if (!res.ok) throw new Error('Failed to fetch global data');
-      const data = await res.json();
+      const res = await fetch('http://localhost:5000/api/aqi/latest');
+      if (!res.ok) throw new Error('Failed to fetch Delhi data');
+      const dataArray = await res.json();
       
-      const formatted = Object.entries(data).map(([code, country]) => ({
-        code,
-        name: country.city || code,
-        aqi: country.aqi,
-        lat: country.lat || 0,
-        lng: country.lng || 0,
-        pm25: country.pm25 || Math.round(country.aqi * 0.7),
-        pm10: country.pm10 || Math.round(country.aqi * 1.2),
-        status: getAQILevel(country.aqi)
-      })).filter(p => p.lat !== 0);
+      const formatted = dataArray.map((district) => {
+        const coords = delhiCoordinates[district.district] || { lat: 28.6139, lng: 77.2090 };
+        return {
+          code: district.district,
+          name: district.district,
+          aqi: district.aqi,
+          lat: coords.lat,
+          lng: coords.lng,
+          pm25: district.pollutants?.pm25 || Math.round(district.aqi * 0.7),
+          pm10: district.pollutants?.pm10 || Math.round(district.aqi * 1.2),
+          status: getAQILevel(district.aqi)
+        };
+      });
 
       setGlobalData(formatted);
       setLoading(false);
     } catch (err) {
       console.error(err);
-      setError('Live data connection interrupted. Using local cache.');
+      setError('Live data connection interrupted. Please refresh.');
       setLoading(false);
     }
   };
@@ -108,7 +125,7 @@ const Heatmap = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#050a18]/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 mx-auto">
         <div className="animate-fade-in-up">
           <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-400 via-white to-cyan-400 bg-clip-text text-transparent leading-tight tracking-tight">
-            Global Air Intelligence
+            Delhi Air Intelligence
           </h1>
           <p className="text-gray-400 text-[10px] font-bold mt-1 opacity-70 uppercase tracking-widest">
             Station Synchronized • <span className="text-blue-400">{stats?.total || 0} Nodes</span>
@@ -146,7 +163,7 @@ const Heatmap = () => {
           {loading && (
             <div className="absolute inset-0 z-[1000] bg-[#050a18] flex flex-col items-center justify-center">
               <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_30px_rgba(59,130,246,0.3)]"></div>
-              <p className="text-blue-400 font-black tracking-tighter animate-pulse">SYNCHRONIZING GLOBAL STATIONS...</p>
+              <p className="text-blue-400 font-black tracking-tighter animate-pulse">SYNCHRONIZING DELHI STATIONS...</p>
             </div>
           )}
           
@@ -199,7 +216,7 @@ const Heatmap = () => {
           {/* Map Overlay Elements */}
           <div className="absolute bottom-10 right-10 z-[500] pointer-events-none space-y-3">
              <div className="glass-card p-4 flex flex-col items-end gap-2 text-right">
-                <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Global Status</div>
+                <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Delhi Status</div>
                 <div className="flex items-center gap-3">
                     <span className="text-xs font-bold text-emerald-400">GOOD</span>
                     <div className="w-20 h-1.5 rounded-full bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-600"></div>
@@ -235,7 +252,7 @@ const Heatmap = () => {
             {stats ? (
               <div className="space-y-8">
                 <div>
-                  <div className="text-[10px] font-black text-gray-400 mb-1 uppercase tracking-widest opacity-60">Global Average</div>
+                  <div className="text-[10px] font-black text-gray-400 mb-1 uppercase tracking-widest opacity-60">Delhi Average</div>
                   <div className="text-5xl font-black text-white tracking-tighter leading-none">
                     {stats.avg}
                   </div>
