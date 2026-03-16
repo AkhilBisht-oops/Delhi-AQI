@@ -132,15 +132,13 @@ router.get('/districts', async (req, res) => {
   }
 });
 
-// @route   GET /api/aqi/summary
-// @desc    Get summary statistics of AQI data
+// @route   GET /api/aqi/global
+// @desc    Get global summary (for home page)
 // @access  Public
-router.get('/summary', async (req, res) => {
+router.get('/global', async (req, res) => {
   try {
     const summary = await AQIData.aggregate([
-      {
-        $sort: { timestamp: -1 }
-      },
+      { $sort: { timestamp: -1 } },
       {
         $group: {
           _id: '$district',
@@ -151,15 +149,14 @@ router.get('/summary', async (req, res) => {
       {
         $group: {
           _id: null,
-          totalDistricts: { $sum: 1 },
-          averageAQI: { $avg: '$latestAQI' },
-          maxAQI: { $max: '$latestAQI' },
-          minAQI: { $min: '$latestAQI' },
-          categoryBreakdown: {
+          total: { $sum: 1 },
+          avg: { $avg: '$latestAQI' },
+          max: { $max: '$latestAQI' },
+          min: { $min: '$latestAQI' },
+          data: {
             $push: {
-              district: '$_id',
-              aqi: '$latestAQI',
-              category: '$category'
+              city: '$_id',
+              aqi: '$latestAQI'
             }
           }
         }
@@ -168,21 +165,36 @@ router.get('/summary', async (req, res) => {
 
     if (summary.length === 0) {
       return res.json({
-        message: 'No AQI data available yet',
-        totalDistricts: 0
+        avg: 0,
+        max: 0,
+        min: 0,
+        total: 0,
+        worstCity: 'N/A',
+        bestCity: 'N/A'
       });
     }
 
-    res.json(summary[0]);
+    const s = summary[0];
+    const sorted = s.data.sort((a, b) => b.aqi - a.aqi);
+
+    res.json({
+      avg: Math.round(s.avg),
+      max: s.max,
+      min: s.min,
+      total: s.total,
+      worstCity: sorted[0]?.city || 'N/A',
+      bestCity: sorted[sorted.length - 1]?.city || 'N/A',
+      // Adding raw data for frontend useMemo if needed
+      ...s.data.reduce((acc, curr) => ({ ...acc, [curr.city]: { aqi: curr.aqi, city: curr.city } }), {})
+    });
 
   } catch (error) {
-    console.error('Error fetching summary:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch summary',
-      details: error.message 
-    });
+    console.error('Error fetching global summary:', error);
+    res.status(500).json({ error: 'Failed to fetch global summary' });
   }
 });
+
+// @route   GET /api/aqi/summary
 
 // @route   GET /api/aqi/worst
 // @desc    Get districts with worst air quality

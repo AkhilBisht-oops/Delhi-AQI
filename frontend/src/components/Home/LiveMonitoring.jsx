@@ -54,16 +54,16 @@ export default function LiveMonitoring() {
   const [temperature, setTemperature] = useState(null);
 
   useEffect(() => {
-    // Fetch global AQI data
-    fetch('/api/aqi/global')
+    // Fetch global AQI data summary
+    fetch('http://localhost:5000/api/aqi/global')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data && Object.keys(data).length) setGlobalData(data);
+        if (data && data.total > 0) setGlobalData(data);
       })
-      .catch(() => {});
+      .catch((err) => console.error('Fetch error:', err));
 
     // Fetch temperature
-    const apiKey = '44785a7c15e1e36601be4c5b65b43dda';
+    const apiKey = 'eea48433f169fc82590680e20281052c';
     fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=Delhi&appid=${apiKey}&units=metric`
     )
@@ -80,20 +80,18 @@ export default function LiveMonitoring() {
         avg: 44,
         max: 187,
         min: 2,
-        total: 65,
-        worstCity: 'Kathmandu',
-        bestCity: 'Toronto',
+        total: 11,
+        worstCity: 'Loading...',
+        bestCity: 'Loading...',
       };
-    const entries = Object.entries(globalData);
-    const values = entries.map(([, d]) => d.aqi);
-    const sorted = [...entries].sort((a, b) => b[1].aqi - a[1].aqi);
+    
     return {
-      avg: Math.round(values.reduce((a, b) => a + b, 0) / values.length),
-      max: Math.max(...values),
-      min: Math.min(...values),
-      total: values.length,
-      worstCity: sorted[0]?.[1]?.city || 'Unknown',
-      bestCity: sorted[sorted.length - 1]?.[1]?.city || 'Unknown',
+      avg: globalData.avg,
+      max: globalData.max,
+      min: globalData.min,
+      total: globalData.total,
+      worstCity: globalData.worstCity,
+      bestCity: globalData.bestCity,
     };
   }, [globalData]);
 
@@ -101,9 +99,9 @@ export default function LiveMonitoring() {
     {
       label: 'Delhi Avg AQI',
       value: stats.avg,
-      color: stats.avg > 100 ? '#ef4444' : stats.avg > 50 ? '#eab308' : '#22c55e',
+      color: stats.avg > 150 ? '#ef4444' : stats.avg > 100 ? '#f97316' : stats.avg > 50 ? '#eab308' : '#22c55e',
       icon: <Activity className="w-5 h-5" />,
-      glow: stats.avg > 100 ? 'rgba(239,68,68,0.15)' : stats.avg > 50 ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)',
+      glow: stats.avg > 150 ? 'rgba(239,68,68,0.15)' : stats.avg > 100 ? 'rgba(249,115,22,0.15)' : 'rgba(234,179,8,0.15)',
     },
     {
       label: 'Most Polluted',

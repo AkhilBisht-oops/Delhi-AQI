@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from './UserMenu';
+import NotificationDropdown from './NotificationDropdown';
 import { 
   LayoutDashboard, 
   Map, 
@@ -30,6 +31,36 @@ const Navbar = () => {
   const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null); // 'alerts' or 'notifications'
+  const [alerts, setAlerts] = useState([]);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/aqi/latest');
+        if (res.ok) {
+          const data = await res.json();
+          const critical = data
+            .filter(d => d.aqi > 150)
+            .map(d => ({
+              id: d.district,
+              title: 'High AQI Warning',
+              desc: `${d.district} has reached ${d.aqi} (${d.category}). Health precautions advised.`,
+              time: 'Live',
+              level: d.aqi > 200 ? 'critical' : 'warning',
+              location: d.district,
+              icon: <AlertCircle className={`w-4 h-4 ${d.aqi > 200 ? 'text-red-400' : 'text-orange-400'}`} />
+            }));
+          setAlerts(critical);
+        }
+      } catch (err) {
+        console.error('Failed to fetch alerts:', err);
+      }
+    };
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -107,16 +138,39 @@ const Navbar = () => {
             </div>
 
             {/* Alert */}
-            <button className="relative p-2.5 rounded-xl hover:bg-white/[0.06] transition-all group hidden sm:block">
-              <AlertCircle className="w-[18px] h-[18px] text-gray-400 group-hover:text-red-400 transition-colors" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse ring-2 ring-[#050a18]"></span>
-            </button>
+            <div className="relative hidden sm:block">
+              <button 
+                onClick={() => setActiveDropdown(activeDropdown === 'alerts' ? null : 'alerts')}
+                className={`relative p-2.5 rounded-xl transition-all group ${activeDropdown === 'alerts' ? 'bg-white/10' : 'hover:bg-white/[0.06]'}`}
+              >
+                <AlertCircle className={`w-[18px] h-[18px] transition-colors ${activeDropdown === 'alerts' ? 'text-red-400' : 'text-gray-400 group-hover:text-red-400'}`} />
+                {alerts.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse ring-2 ring-[#050a18]"></span>
+                )}
+              </button>
+              <NotificationDropdown 
+                type="alerts" 
+                data={alerts}
+                isOpen={activeDropdown === 'alerts'} 
+                onClose={() => setActiveDropdown(null)} 
+              />
+            </div>
 
             {/* Notifications */}
-            <button className="relative p-2.5 rounded-xl hover:bg-white/[0.06] transition-all group hidden sm:block">
-              <Bell className="w-[18px] h-[18px] text-gray-400 group-hover:text-blue-400 transition-colors" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full ring-2 ring-[#050a18]"></span>
-            </button>
+            <div className="relative hidden sm:block">
+              <button 
+                onClick={() => setActiveDropdown(activeDropdown === 'notifications' ? null : 'notifications')}
+                className={`relative p-2.5 rounded-xl transition-all group ${activeDropdown === 'notifications' ? 'bg-white/10' : 'hover:bg-white/[0.06]'}`}
+              >
+                <Bell className={`w-[18px] h-[18px] transition-colors ${activeDropdown === 'notifications' ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400'}`} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full ring-2 ring-[#050a18]"></span>
+              </button>
+              <NotificationDropdown 
+                type="notifications" 
+                isOpen={activeDropdown === 'notifications'} 
+                onClose={() => setActiveDropdown(null)} 
+              />
+            </div>
 
             {/* Divider */}
             <div className="hidden sm:block w-px h-6 bg-white/10 mx-1.5"></div>

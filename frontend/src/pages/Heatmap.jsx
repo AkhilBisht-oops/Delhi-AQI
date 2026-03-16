@@ -27,8 +27,8 @@ const Heatmap = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedPollutant, setSelectedPollutant] = useState('aqi');
-  const [mapCenter, setMapCenter] = useState([20, 0]);
-  const [mapZoom, setMapZoom] = useState(2);
+  const [mapCenter, setMapCenter] = useState([28.6139, 77.2090]);
+  const [mapZoom, setMapZoom] = useState(11);
   const [activePoint, setActivePoint] = useState(null);
 
   const regions = [
@@ -98,12 +98,17 @@ const Heatmap = () => {
     return 'Hazardous';
   };
 
-  const getColor = (aqi) => {
-    if (aqi <= 50) return '#22c55e'; // emerald-500
-    if (aqi <= 100) return '#eab308'; // yellow-500
-    if (aqi <= 150) return '#f97316'; // orange-500
-    if (aqi <= 200) return '#ef4444'; // red-500
-    if (aqi <= 300) return '#a855f7'; // purple-500
+  const getColor = (value, type = 'aqi') => {
+    // Basic scale for visualization; can be refined with specific breakpoints for PM2.5/PM10
+    let aqiValue = value;
+    if (type === 'pm25') aqiValue = value * 2; // Approximate normalization for color scale
+    if (type === 'pm10') aqiValue = value;
+
+    if (aqiValue <= 50) return '#22c55e'; // emerald-500
+    if (aqiValue <= 100) return '#eab308'; // yellow-500
+    if (aqiValue <= 150) return '#f97316'; // orange-500
+    if (aqiValue <= 200) return '#ef4444'; // red-500
+    if (aqiValue <= 300) return '#a855f7'; // purple-500
     return '#7e0023'; // maroon
   };
 
@@ -183,11 +188,11 @@ const Heatmap = () => {
               <CircleMarker
                 key={city.code}
                 center={[city.lat, city.lng]}
-                radius={city.aqi / 10 + 2}
+                radius={city[selectedPollutant] / 10 + 2}
                 pathOptions={{
-                  fillColor: getColor(city.aqi),
+                  fillColor: getColor(city[selectedPollutant], selectedPollutant),
                   fillOpacity: 0.6,
-                  color: getColor(city.aqi),
+                  color: getColor(city[selectedPollutant], selectedPollutant),
                   weight: 2,
                 }}
                 eventHandlers={{
@@ -195,17 +200,32 @@ const Heatmap = () => {
                 }}
               >
                 <Popup className="aqi-popup">
-                  <div className="p-2 min-w-[180px]">
-                    <div className="flex justify-between items-start mb-2">
-                        <span className="font-black text-gray-800 uppercase tracking-tighter">{city.name}</span>
-                        <span className="text-[10px] text-gray-400 font-bold">{city.code}</span>
+                  <div className="p-3 min-w-[200px] bg-[#0f172a] text-white border border-white/10 rounded-2xl">
+                    <div className="flex justify-between items-start mb-3">
+                        <span className="font-black text-white uppercase tracking-tighter">{city.name}</span>
+                        <span className="text-[10px] text-gray-400 font-bold">{city.status}</span>
                     </div>
-                    <div className="text-3xl font-black mb-1" style={{ color: getColor(city.aqi) }}>
-                        {city.aqi} <span className="text-xs uppercase opacity-60">AQI</span>
+                    
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="p-2 bg-white/5 rounded-xl border border-white/5">
+                            <div className="text-[9px] font-black text-gray-500 uppercase mb-1">AQI</div>
+                            <div className="text-xl font-black" style={{ color: getColor(city.aqi, 'aqi') }}>{city.aqi}</div>
+                        </div>
+                        <div className="p-2 bg-white/5 rounded-xl border border-white/5">
+                            <div className="text-[9px] font-black text-gray-500 uppercase mb-1">Status</div>
+                            <div className="text-[10px] font-bold truncate" style={{ color: getColor(city.aqi, 'aqi') }}>{city.status}</div>
+                        </div>
                     </div>
-                    <div className="text-[10px] font-black uppercase text-gray-500 border-t border-gray-100 pt-2 flex justify-between">
-                        <span>PM2.5: {city.pm25}</span>
-                        <span className="text-blue-500">{city.status}</span>
+
+                    <div className="space-y-2 border-t border-white/5 pt-3">
+                        <div className="flex justify-between items-center text-[10px] font-bold">
+                            <span className="text-gray-400 uppercase">PM2.5</span>
+                            <span className="text-blue-400">{city.pm25} µg/m³</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] font-bold">
+                            <span className="text-gray-400 uppercase">PM10</span>
+                            <span className="text-cyan-400">{city.pm10} µg/m³</span>
+                        </div>
                     </div>
                   </div>
                 </Popup>

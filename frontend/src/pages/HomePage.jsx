@@ -150,7 +150,7 @@ export default function HomePage() {
             >
               Explore More
             </motion.h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
               {[
                 {
                   label: 'Delhi AQI',
@@ -192,7 +192,7 @@ export default function HomePage() {
                 >
                   <Link to={item.href}>
                     <motion.div
-                      className={`group p-5 rounded-2xl bg-gradient-to-br ${item.gradient} border ${item.border} cursor-pointer transition-shadow duration-300`}
+                      className={`group p-6 rounded-2xl bg-gradient-to-br ${item.gradient} border ${item.border} cursor-pointer transition-shadow duration-300`}
                       style={{ boxShadow: `0 0 30px ${item.glow}` }}
                       whileHover={{ scale: 1.03, y: -4 }}
                       whileTap={{ scale: 0.98 }}
@@ -201,9 +201,9 @@ export default function HomePage() {
                         <div className={item.text}>{item.icon}</div>
                         <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all" />
                       </div>
-                      <div className="mt-3">
-                        <div className="text-sm font-bold text-white">{item.label}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">{item.desc}</div>
+                      <div className="mt-4">
+                        <div className="text-base font-bold text-white">{item.label}</div>
+                        <div className="text-sm text-gray-500 mt-1">{item.desc}</div>
                       </div>
                     </motion.div>
                   </Link>
