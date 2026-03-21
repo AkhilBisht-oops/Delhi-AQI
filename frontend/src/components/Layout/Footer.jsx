@@ -42,6 +42,8 @@ const Footer = () => {
             <ul className="space-y-2.5">
               {[
                 { name: 'Dashboard', href: '/' },
+                { name: 'About', href: '/#about' },
+                { name: 'Contact', href: '/#contact' },
                 { name: 'Delhi AQI', href: '/globe' },
                 { name: 'Heatmap', href: '/heatmap' },
                 { name: 'Trends', href: '/trends' },

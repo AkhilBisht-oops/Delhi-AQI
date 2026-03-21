@@ -13,8 +13,6 @@ import Alerts from './pages/Alerts';
 import AdminPanel from './pages/AdminPanel';
 import Tips from './pages/Tips';
 import GlobeView from './pages/GlobeView';
-import About from './pages/About';
-import Contact from './pages/Contact';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import './App.css';
 
@@ -24,20 +22,38 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
-            {/* Standalone homepage — no Layout wrapper for full-screen globe */}
+            {/* Standalone pages — no Layout wrapper */}
             <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
             {/* All other pages use Layout (navbar, sidebar, footer) */}
             <Route element={<Layout />}>
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="heatmap" element={<Heatmap />} />
-              <Route path="trends" element={<Trends />} />
-              <Route path="tips" element={<Tips />} />
-              <Route path="globe" element={<GlobeView />} />
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route path="about" element={<About />} />
-              <Route path="contact" element={<Contact />} />
+              <Route path="dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="heatmap" element={
+                <ProtectedRoute>
+                  <Heatmap />
+                </ProtectedRoute>
+              } />
+              <Route path="trends" element={
+                <ProtectedRoute>
+                  <Trends />
+                </ProtectedRoute>
+              } />
+              <Route path="tips" element={
+                <ProtectedRoute>
+                  <Tips />
+                </ProtectedRoute>
+              } />
+              <Route path="globe" element={
+                <ProtectedRoute>
+                  <GlobeView />
+                </ProtectedRoute>
+              } />
 
               {/* Protected Routes */}
               <Route path="alerts" element={

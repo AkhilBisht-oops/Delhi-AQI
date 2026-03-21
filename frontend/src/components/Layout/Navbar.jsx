@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from './UserMenu';
 import NotificationDropdown from './NotificationDropdown';
 import LoginModal from '../Auth/LoginModal';
-import { 
+import {
   Globe,
   Menu,
   X,
@@ -14,11 +14,13 @@ import {
   BarChart2,
   Activity,
   Lightbulb,
-  Map
+  Map,
+  Mail
 } from 'lucide-react';
-
 const navLinks = [
   { name: 'Dashboard', path: '/dashboard', icon: <Home size={18} /> },
+  { name: 'About', path: '/#about', icon: <Globe size={18} /> },
+  { name: 'Contact', path: '/#contact', icon: <Mail size={18} /> },
   { name: 'Trends', path: '/trends', icon: <BarChart2 size={18} /> },
   { name: 'Delhi Reports', path: '/globe', icon: <Map size={18} /> },
   { name: 'Heatmap', path: '/heatmap', icon: <Activity size={18} /> },
@@ -68,7 +70,7 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleDashboardClick = (e) => {
+  const handleProtectedClick = (e, path) => {
     if (!user) {
       e.preventDefault();
       setIsLoginModalOpen(true);
@@ -77,10 +79,9 @@ const Navbar = () => {
 
   return (
     <>
-      <header 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled ? 'py-2' : 'py-3'
-        }`}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-2' : 'py-3'
+          }`}
         style={{
           backgroundColor: scrolled ? 'rgba(5, 10, 24, 0.92)' : 'rgba(5, 10, 24, 0.5)',
           backdropFilter: 'blur(20px) saturate(180%)',
@@ -90,7 +91,7 @@ const Navbar = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            
+
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
               <div className="relative">
@@ -115,12 +116,11 @@ const Navbar = () => {
                   <NavLink
                     key={item.name}
                     to={item.path}
-                    onClick={item.name === 'Dashboard' ? handleDashboardClick : undefined}
+                    onClick={(e) => handleProtectedClick(e, item.path)}
                     className={({ isActive }) =>
-                      `relative flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300 ${
-                        isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20'
-                          : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                      `relative flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300 ${isActive
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20'
+                        : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
                       }`
                     }
                   >
@@ -143,7 +143,7 @@ const Navbar = () => {
               </div>
 
               <div className="relative hidden sm:block">
-                <button 
+                <button
                   onClick={() => setActiveDropdown(activeDropdown === 'alerts' ? null : 'alerts')}
                   className={`relative p-2.5 rounded-xl transition-all group ${activeDropdown === 'alerts' ? 'bg-white/10' : 'hover:bg-white/[0.06]'}`}
                 >
@@ -154,7 +154,7 @@ const Navbar = () => {
               </div>
 
               <div className="relative hidden sm:block">
-                <button 
+                <button
                   onClick={() => setActiveDropdown(activeDropdown === 'notifications' ? null : 'notifications')}
                   className={`relative p-2.5 rounded-xl transition-all group ${activeDropdown === 'notifications' ? 'bg-white/10' : 'hover:bg-white/[0.06]'}`}
                 >
@@ -186,15 +186,12 @@ const Navbar = () => {
                   key={item.name}
                   to={item.path}
                   onClick={(e) => {
-                    if (item.name === 'Dashboard') {
-                      handleDashboardClick(e);
-                      if (!user) return; // Don't close mobile menu if modal opens
-                    }
+                    handleProtectedClick(e, item.path);
+                    if (!user) return;
                     setMobileOpen(false);
                   }}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                      isActive ? 'bg-gradient-to-r from-blue-600/70 to-purple-600/70 text-white shadow-lg shadow-blue-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${isActive ? 'bg-gradient-to-r from-blue-600/70 to-purple-600/70 text-white shadow-lg shadow-blue-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
                     }`
                   }
                 >
@@ -206,10 +203,10 @@ const Navbar = () => {
           </div>
         </div>
       </header>
-      
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)} 
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={() => navigate('/dashboard')}
       />
     </>

@@ -5,9 +5,9 @@ import { Globe, Menu, X, Bell, AlertCircle } from 'lucide-react';
 import NotificationDropdown from '../Layout/NotificationDropdown';
 
 const navItems = [
-  { name: 'Home', href: '/' },
-  { name: 'About', href: '/about' },
-  { name: 'Contact', href: '/contact' },
+  { name: 'Home', id: 'top' },
+  { name: 'About', id: 'about' },
+  { name: 'Contact', id: 'contact' },
 ];
 
 export default function HomeNavbar() {
@@ -18,6 +18,15 @@ export default function HomeNavbar() {
   const [activeDropdown, setActiveDropdown] = useState(null); // 'alerts' or 'notifications'
   const [alerts, setAlerts] = useState([]);
   const location = useLocation();
+
+  const handleNavClick = (e, id) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    setMobileOpen(false);
+  };
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -50,7 +59,7 @@ export default function HomeNavbar() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
+
       // Update scrolled state for styling
       setScrolled(currentScrollY > 30);
 
@@ -62,7 +71,7 @@ export default function HomeNavbar() {
       } else {
         setVisible(true); // Scrolling up
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
@@ -74,11 +83,11 @@ export default function HomeNavbar() {
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
       initial={{ y: -100, opacity: 0 }}
-      animate={{ 
-        y: visible ? 0 : -100, 
-        opacity: visible ? 1 : 0 
+      animate={{
+        y: visible ? 0 : -100,
+        opacity: visible ? 1 : 0
       }}
-      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }} 
+      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       style={{
         backgroundColor: scrolled
           ? 'rgba(5, 10, 24, 0.85)'
@@ -93,7 +102,7 @@ export default function HomeNavbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'py-3' : 'py-4 md:py-5'}`}>
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" onClick={(e) => handleNavClick(e, 'top')} className="flex items-center gap-3 group">
             <motion.div
               className="relative"
               whileHover={{ scale: 1.08, rotate: 5 }}
@@ -121,29 +130,20 @@ export default function HomeNavbar() {
           <nav className="hidden md:flex items-center">
             <div className="flex items-center gap-1 p-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.href;
                 return (
-                  <Link key={item.name} to={item.href}>
+                  <button
+                    key={item.name}
+                    onClick={(e) => handleNavClick(e, item.id)}
+                    className="relative px-5 py-2 rounded-xl text-[13px] font-semibold text-gray-400 hover:text-white transition-colors duration-300"
+                  >
                     <motion.div
-                      className={`relative px-5 py-2 rounded-xl text-[13px] font-semibold transition-colors duration-300 ${
-                        isActive
-                          ? 'text-white'
-                          : 'text-gray-400 hover:text-white'
-                      }`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.98 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                     >
-                      {isActive && (
-                        <motion.div
-                          layoutId="nav-pill"
-                          className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg shadow-blue-500/20"
-                          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                        />
-                      )}
                       <span className="relative z-10">{item.name}</span>
                     </motion.div>
-                  </Link>
+                  </button>
                 );
               })}
             </div>
@@ -161,7 +161,7 @@ export default function HomeNavbar() {
 
             {/* Alert */}
             <div className="relative hidden sm:block">
-              <button 
+              <button
                 onClick={() => setActiveDropdown(activeDropdown === 'alerts' ? null : 'alerts')}
                 className={`relative p-2.5 rounded-xl transition-all group ${activeDropdown === 'alerts' ? 'bg-white/10' : 'hover:bg-white/[0.06]'}`}
               >
@@ -170,27 +170,27 @@ export default function HomeNavbar() {
                   <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse ring-2 ring-[#050a18]"></span>
                 )}
               </button>
-              <NotificationDropdown 
-                type="alerts" 
+              <NotificationDropdown
+                type="alerts"
                 data={alerts}
-                isOpen={activeDropdown === 'alerts'} 
-                onClose={() => setActiveDropdown(null)} 
+                isOpen={activeDropdown === 'alerts'}
+                onClose={() => setActiveDropdown(null)}
               />
             </div>
 
             {/* Notifications */}
             <div className="relative hidden sm:block">
-              <button 
+              <button
                 onClick={() => setActiveDropdown(activeDropdown === 'notifications' ? null : 'notifications')}
                 className={`relative p-2.5 rounded-xl transition-all group ${activeDropdown === 'notifications' ? 'bg-white/10' : 'hover:bg-white/[0.06]'}`}
               >
                 <Bell className={`w-[19px] h-[19px] transition-colors ${activeDropdown === 'notifications' ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400'}`} />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full ring-2 ring-[#050a18]"></span>
               </button>
-              <NotificationDropdown 
-                type="notifications" 
-                isOpen={activeDropdown === 'notifications'} 
-                onClose={() => setActiveDropdown(null)} 
+              <NotificationDropdown
+                type="notifications"
+                isOpen={activeDropdown === 'notifications'}
+                onClose={() => setActiveDropdown(null)}
               />
             </div>
 
@@ -221,7 +221,6 @@ export default function HomeNavbar() {
           >
             <nav className="max-w-7xl mx-auto px-4 py-3 space-y-1">
               {navItems.map((item, i) => {
-                const isActive = location.pathname === item.href;
                 return (
                   <motion.div
                     key={item.name}
@@ -229,17 +228,12 @@ export default function HomeNavbar() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.08, duration: 0.3 }}
                   >
-                    <Link
-                      to={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                        isActive
-                          ? 'bg-gradient-to-r from-blue-600/70 to-purple-600/70 text-white shadow-lg shadow-blue-500/10'
-                          : 'text-gray-400 hover:text-white hover:bg-white/5'
-                      }`}
+                    <button
+                      onClick={(e) => handleNavClick(e, item.id)}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                     >
                       {item.name}
-                    </Link>
+                    </button>
                   </motion.div>
                 );
               })}
