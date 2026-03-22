@@ -75,7 +75,7 @@ const NotificationDropdown = ({ isOpen, onClose, type = 'notifications', data = 
     },
     {
       id: 2,
-      title: 'New Health Tips',
+      title: 'New Health Advisory',
       desc: 'Check out the new guide for mask recommendations.',
       time: '5 hours ago',
       type: 'info',

@@ -5,15 +5,16 @@ import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
-import Heatmap from './pages/Heatmap';
-import Trends from './pages/Trends';
+import DelhiMap from './pages/DelhiMap';
+import Analytics from './pages/Analytics';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Alerts from './pages/Alerts';
 import AdminPanel from './pages/AdminPanel';
-import Tips from './pages/Tips';
+import HealthAdvisory from './pages/HealthAdvisory';
 import Globe from './pages/Globe';
 import Profile from './pages/Profile';
+import AuthSuccess from './pages/AuthSuccess';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import './App.css';
 
@@ -27,6 +28,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/auth-success" element={<AuthSuccess />} />
 
             {/* All other pages use Layout (navbar, sidebar, footer) */}
             <Route element={<Layout />}>
@@ -37,17 +39,17 @@ function App() {
               } />
               <Route path="heatmap" element={
                 <ProtectedRoute>
-                  <Heatmap />
+                  <DelhiMap />
                 </ProtectedRoute>
               } />
-              <Route path="trends" element={
+              <Route path="analytics" element={
                 <ProtectedRoute>
-                  <Trends />
+                  <Analytics />
                 </ProtectedRoute>
               } />
-              <Route path="tips" element={
+              <Route path="advisory" element={
                 <ProtectedRoute>
-                  <Tips />
+                  <HealthAdvisory />
                 </ProtectedRoute>
               } />
               <Route path="globe" element={

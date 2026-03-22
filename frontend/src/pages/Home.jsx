@@ -240,9 +240,9 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
               {[
                 {
-                  label: 'Delhi AQI',
-                  desc: '3D interactive globe',
-                  href: '/globe',
+                  label: 'Delhi Map',
+                  desc: 'Interactive pollution map',
+                  href: '/heatmap',
                   icon: <Globe className="w-5 h-5" />,
                   gradient: 'from-cyan-500/15 to-blue-500/15',
                   border: 'border-cyan-500/20',
@@ -250,9 +250,9 @@ export default function Home() {
                   glow: 'rgba(6,182,212,0.1)',
                 },
                 {
-                  label: 'Heatmap',
-                  desc: 'Pollution heatmap',
-                  href: '/heatmap',
+                  label: 'Analytics',
+                  desc: 'Historical analysis',
+                  href: '/analytics',
                   icon: <MapPin className="w-5 h-5" />,
                   gradient: 'from-orange-500/15 to-red-500/15',
                   border: 'border-orange-500/20',
@@ -260,9 +260,9 @@ export default function Home() {
                   glow: 'rgba(249,115,22,0.1)',
                 },
                 {
-                  label: 'Trends',
-                  desc: 'Historical data',
-                  href: '/trends',
+                  label: 'Advisory',
+                  desc: 'Health recommendations',
+                  href: '/advisory',
                   icon: <TrendingUp className="w-5 h-5" />,
                   gradient: 'from-emerald-500/15 to-cyan-500/15',
                   border: 'border-emerald-500/20',

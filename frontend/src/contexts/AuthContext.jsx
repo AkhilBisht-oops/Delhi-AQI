@@ -74,7 +74,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (updates) => {
-    setUser(prev => ({ ...prev, ...updates }));
+    setUser(prev => prev ? { ...prev, ...updates } : updates);
+  };
+
+  const setUserFromToken = (token) => {
+    localStorage.setItem('token', token);
+    const decoded = jwtDecode(token);
+    setUser(decoded);
   };
 
   return (
@@ -85,6 +91,7 @@ export const AuthProvider = ({ children }) => {
       register, 
       logout, 
       updateUser,
+      setUserFromToken,
       isAdmin: user?.role === 'admin' 
     }}>
       {children}

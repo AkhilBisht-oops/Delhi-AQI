@@ -45,9 +45,9 @@ const Footer = () => {
                 { name: 'About', href: '/#about' },
                 { name: 'Contact', href: '/#contact' },
                 { name: 'Delhi AQI', href: '/globe' },
-                { name: 'Heatmap', href: '/heatmap' },
-                { name: 'Trends', href: '/trends' },
-                { name: 'Pollution Tips', href: '/tips' },
+                { name: 'Delhi Map', href: '/heatmap' },
+                { name: 'Analytics', href: '/analytics' },
+                { name: 'Health Advisory', href: '/advisory' },
               ].map(link => (
                 <li key={link.name}>
                   <Link to={link.href} className="text-sm text-gray-500 hover:text-blue-400 transition-colors flex items-center gap-1.5">
@@ -64,8 +64,8 @@ const Footer = () => {
             <h3 className="text-sm font-bold text-white uppercase tracking-wide mb-4">Resources</h3>
             <ul className="space-y-2.5">
               {[
-                { name: 'AQI Scale Guide', href: '/tips' },
-                { name: 'Health Advisory', href: '/alerts' },
+                { name: 'AQI Scale Guide', href: '/advisory' },
+                { name: 'Health Advisory', href: '/advisory' },
                 { name: 'API Documentation', href: '#' },
                 { name: 'Data Sources', href: '#' },
               ].map(link => (

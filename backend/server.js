@@ -2,12 +2,17 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const passport = require('passport');
+
+// Passport Config
+require('./config/passport')(passport);
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(passport.initialize());
 
 // MongoDB Connection with better error handling
 mongoose.connect(process.env.MONGODB_URI, {

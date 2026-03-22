@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, Component } from 'react';
 import { motion } from 'framer-motion';
-import AQIWidget from '../components/Dashboard/AQIWidget';
-import PollutionCard from '../components/Dashboard/PollutionCard';
-import WeatherWidget from '../components/Dashboard/WeatherWidget';
-import AlertWidget from '../components/Dashboard/AlertWidget';
-import DistrictCard from '../components/Dashboard/DistrictCard';
-import StatsCard from '../components/Dashboard/StatsCard';
+import AqiOverview from '../components/Dashboard/AqiOverview';
+import AtmosphericStats from '../components/Dashboard/AtmosphericStats';
+import HealthAlerts from '../components/Dashboard/HealthAlerts';
+import AreaRankCard from '../components/Dashboard/AreaRankCard';
+import QuickStats from '../components/Dashboard/QuickStats';
 
 import { 
   Globe, 
@@ -43,8 +42,8 @@ class GlobeBoundary extends Component {
   }
 }
 
-// Lazy load the HeroGlobe
-const HeroGlobe = React.lazy(() => import('../components/Dashboard/HeroGlobe'));
+// Lazy load the DashboardGlobe
+const DashboardGlobe = React.lazy(() => import('../components/Dashboard/DashboardGlobe'));
 
 // Collapsible Section Component
 function Section({ title, subtitle, icon, children, defaultOpen = false, badge, accentColor = 'blue' }) {
@@ -212,7 +211,7 @@ const Dashboard = () => {
             </div>
           }>
             <GlobeBoundary>
-              <HeroGlobe />
+              <DashboardGlobe />
             </GlobeBoundary>
           </React.Suspense>
         </div>
@@ -273,7 +272,7 @@ const Dashboard = () => {
             { title: 'Locations', value: String(regionStats.total), description: selectedRegion === 'all' ? 'Tracked in Delhi' : `Tracked in ${selectedRegion}`, icon: <Globe className="w-6 h-6 text-purple-400" />, delay: '0.4s' },
           ].map((stat, i) => (
             <div key={i} className="animate-fade-in-up" style={{ animationDelay: stat.delay }}>
-              <StatsCard {...stat} />
+              <QuickStats {...stat} />
             </div>
           ))}
         </div>
@@ -310,7 +309,7 @@ const Dashboard = () => {
           defaultOpen={true}
           badge={{ text: 'LIVE', className: 'bg-green-500/20 text-green-400 border border-green-500/20' }}
         >
-          <AQIWidget data={liveData} loading={loading} />
+          <AqiOverview data={liveData} loading={loading} />
         </Section>
 
         {/* Most Polluted — horizontal cards */}
@@ -370,7 +369,7 @@ const Dashboard = () => {
           icon={<Thermometer className="w-5 h-5" />}
           accentColor="cyan"
         >
-          <WeatherWidget data={liveData} />
+          <AtmosphericStats data={liveData} />
         </Section>
 
         {/* Alerts */}
@@ -381,7 +380,7 @@ const Dashboard = () => {
           accentColor="orange"
           badge={{ text: 'URGENT', className: 'bg-red-500/20 text-red-400 border border-red-500/20 animate-pulse' }}
         >
-          <AlertWidget />
+          <HealthAlerts />
         </Section>
 
         {/* Rankings Table */}
@@ -393,7 +392,7 @@ const Dashboard = () => {
         >
           <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
             {regionStats.mostPollutedCountries.map((country) => (
-              <DistrictCard key={country.code} district={country} />
+              <AreaRankCard key={country.code} district={country} />
             ))}
           </div>
         </Section>
