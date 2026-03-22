@@ -24,7 +24,7 @@ const navLinks = [
   { name: 'Pollution Tips', path: '/tips', icon: <Lightbulb size={18} /> },
 ];
 
-const Navbar = () => {
+const Header = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -210,4 +210,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default Header;

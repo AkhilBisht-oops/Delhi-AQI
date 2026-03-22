@@ -41,8 +41,8 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/aqi', require('./routes/aqi'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/aqi', require('./routes/aqiRoutes'));
 
 // Test route
 app.get('/', (req, res) => {

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const AQIData = require('../models/AQIData');
+const Aqi = require('../models/Aqi');
 const { delhiDistricts, worldCities } = require('../config/locations');
 
 // @route   GET /api/aqi/latest
@@ -9,7 +9,7 @@ const { delhiDistricts, worldCities } = require('../config/locations');
 router.get('/latest', async (req, res) => {
   try {
     // Get the latest AQI data for each district
-    const latestData = await AQIData.aggregate([
+    const latestData = await Aqi.aggregate([
       {
         $sort: { timestamp: -1 }
       },
@@ -57,7 +57,7 @@ router.get('/district/:districtName', async (req, res) => {
   try {
     const { districtName } = req.params;
 
-    const data = await AQIData.findOne({ 
+    const data = await Aqi.findOne({ 
       district: districtName 
     }).sort({ timestamp: -1 });
 
@@ -94,7 +94,7 @@ router.get('/history', async (req, res) => {
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - parseInt(days));
 
-    const historicalData = await AQIData.find({
+    const historicalData = await Aqi.find({
       district: district,
       timestamp: { $gte: daysAgo }
     }).sort({ timestamp: 1 });
@@ -120,7 +120,7 @@ router.get('/history', async (req, res) => {
 // @access  Public
 router.get('/districts', async (req, res) => {
   try {
-    const districts = await AQIData.find().distinct('district');
+    const districts = await Aqi.find().distinct('district');
     res.json({ districts });
 
   } catch (error) {
@@ -137,7 +137,7 @@ router.get('/districts', async (req, res) => {
 // @access  Public
 router.get('/global', async (req, res) => {
   try {
-    const summary = await AQIData.aggregate([
+    const summary = await Aqi.aggregate([
       { $sort: { timestamp: -1 } },
       {
         $group: {
@@ -203,7 +203,7 @@ router.get('/worst', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 5;
 
-    const worstDistricts = await AQIData.aggregate([
+    const worstDistricts = await Aqi.aggregate([
       {
         $sort: { timestamp: -1 }
       },

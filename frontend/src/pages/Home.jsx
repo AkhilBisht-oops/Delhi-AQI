@@ -25,7 +25,7 @@ class GlobeBoundary extends Component {
 
 const EarthGlobe = React.lazy(() => import('../components/Home/EarthGlobe'));
 
-export default function HomePage() {
+export default function Home() {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,

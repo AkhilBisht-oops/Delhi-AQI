@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const axios = require('axios');
-const AQIData = require('../models/AQIData');
+const Aqi = require('../models/Aqi');
 const { delhiDistricts, worldCities } = require('../config/locations');
 
 // Function to get AQI category and color
@@ -96,7 +96,7 @@ const fetchAndStoreAQI = async () => {
     }
     
     if (allResults.length > 0) {
-      await AQIData.insertMany(allResults);
+      await Aqi.insertMany(allResults);
       console.log(`✅ Successfully stored AQI snapshots for ${allResults.length} locations`);
     }
   } catch (error) {

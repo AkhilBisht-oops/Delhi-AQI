@@ -47,7 +47,7 @@ const getAQICategory = (aqi) => {
   return 'Hazardous';
 };
 
-const GlobeView = () => {
+const Globe = () => {
   const { theme } = useTheme();
   const [aqiData, setAqiData] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -407,4 +407,4 @@ const GlobeView = () => {
   );
 };
 
-export default GlobeView;
+export default Globe;

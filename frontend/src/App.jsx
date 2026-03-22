@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
-import HomePage from './pages/HomePage';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Heatmap from './pages/Heatmap';
 import Trends from './pages/Trends';
@@ -12,7 +12,7 @@ import Register from './pages/Register';
 import Alerts from './pages/Alerts';
 import AdminPanel from './pages/AdminPanel';
 import Tips from './pages/Tips';
-import GlobeView from './pages/GlobeView';
+import Globe from './pages/Globe';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import './App.css';
@@ -24,7 +24,7 @@ function App() {
         <Router>
           <Routes>
             {/* Standalone pages — no Layout wrapper */}
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
@@ -52,7 +52,7 @@ function App() {
               } />
               <Route path="globe" element={
                 <ProtectedRoute>
-                  <GlobeView />
+                  <Globe />
                 </ProtectedRoute>
               } />
 
