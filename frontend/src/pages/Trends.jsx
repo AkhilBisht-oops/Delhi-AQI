@@ -308,14 +308,14 @@ const Trends = () => {
                         fontSize={10} 
                         tickLine={false} 
                         axisLine={false}
-                        tick={{ fill: '#64748b', fontWeight: 700 }}
+                        tick={{ fill: '#64748b', fontWeight: 700, fontFamily: 'Inter' }}
                       />
                       <YAxis 
                         stroke="#64748b" 
                         fontSize={10} 
                         tickLine={false} 
                         axisLine={false}
-                        tick={{ fill: '#64748b', fontWeight: 700 }}
+                        tick={{ fill: '#64748b', fontWeight: 700, fontFamily: 'Inter' }}
                       />
                       <Tooltip content={<CustomTooltip />} />
                       {activeMetrics.map(id => (

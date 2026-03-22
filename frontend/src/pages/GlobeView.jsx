@@ -333,7 +333,7 @@ const GlobeView = () => {
                               fontSize={10} 
                               axisLine={false} 
                               tickLine={false} 
-                              tick={{ fill: '#64748b', fontWeight: 900 }}
+                              tick={{ fill: '#64748b', fontWeight: 900, fontFamily: 'Inter' }}
                             />
                             <Tooltip 
                                cursor={{ fill: 'rgba(255,255,255,0.02)' }}
