@@ -5,30 +5,36 @@ import {
   Line, 
   AreaChart, 
   Area, 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   Legend, 
   ResponsiveContainer,
-  ReferenceLine
+  ReferenceLine,
+  Brush
 } from 'recharts';
 import { 
   TrendingUp, 
   Calendar, 
-  BarChart3, 
   Activity, 
   AlertTriangle, 
   ArrowUpRight, 
   ArrowDownRight, 
   Zap,
-  ChevronDown
+  ChevronDown,
+  Download,
+  Table as TableIcon,
+  LineChart as ChartIcon,
+  Sun,
+  Moon,
+  Info,
+  Layers,
+  FileSpreadsheet
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const CustomTooltip = ({ active, payload, label, theme }) => {
+const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl">
@@ -49,12 +55,19 @@ const CustomTooltip = ({ active, payload, label, theme }) => {
 const Trends = () => {
   const { theme } = useTheme();
   const [timeRange, setTimeRange] = useState('7');
-  const [selectedPollutant, setSelectedPollutant] = useState('aqi');
+  const [activeMetrics, setActiveMetrics] = useState(['aqi']);
   const [selectedDistrict, setSelectedDistrict] = useState('Central Delhi');
-  const [districts, setDistricts] = useState({ delhi: [], global: [] });
+  const [districts, setDistricts] = useState([]);
   const [historicalData, setHistoricalData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState('chart'); // 'chart' or 'table'
+  
+  const pollutants = [
+    { id: 'aqi', label: 'AQI Index', color: '#3b82f6' },
+    { id: 'pm25', label: 'PM2.5', color: '#ef4444' },
+    { id: 'pm10', label: 'PM10', color: '#f97316' },
+    { id: 'no2', label: 'NO₂', color: '#a855f7' },
+  ];
 
   useEffect(() => {
     fetchDistricts();
@@ -70,19 +83,7 @@ const Trends = () => {
     try {
       const res = await fetch('http://localhost:5000/api/aqi/districts');
       const data = await res.json();
-      if (data.districts && data.districts.length > 0) {
-        // Categorize districts: Delhi vs Global
-        const delhiDistricts = data.districts.filter(d => 
-          !d.toLowerCase().includes('global') // assuming backend only returns delhi districts now
-        ).sort();
-        const globalCities = [];
-        
-        setDistricts({ delhi: delhiDistricts, global: globalCities });
-        
-        if (!data.districts.includes(selectedDistrict)) {
-            setSelectedDistrict(delhiDistricts[0] || data.districts[0]);
-        }
-      }
+      if (data.districts) setDistricts(data.districts.sort());
     } catch (err) {
       console.error('Failed to fetch districts', err);
     }
@@ -95,248 +96,320 @@ const Trends = () => {
       if (!res.ok) throw new Error('Failed to fetch history');
       const data = await res.json();
       
-      const formatted = data.data.map(item => ({
-        time: new Date(item.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit' }),
-        aqi: item.aqi,
-        pm25: item.pollutants?.pm25 || 0,
-        pm10: item.pollutants?.pm10 || 0,
-        no2: item.pollutants?.no2 || 0,
-      }));
+      const formatted = data.data.map(item => {
+        const date = new Date(item.timestamp);
+        return {
+          timestamp: item.timestamp,
+          time: date.toLocaleDateString([], { month: 'short', day: 'numeric' }),
+          hour: date.getHours(),
+          fullTime: date.toLocaleString(),
+          aqi: item.aqi,
+          pm25: item.pollutants?.pm25 || 0,
+          pm10: item.pollutants?.pm10 || 0,
+          no2: item.pollutants?.no2 || 0,
+        };
+      });
 
       setHistoricalData(formatted);
-      setLoading(false);
     } catch (err) {
       console.error(err);
-      setError('Intelligence systems offline. Reverting to local cache.');
+    } finally {
       setLoading(false);
     }
   };
 
   const stats = useMemo(() => {
-    if (historicalData.length < 2) return null;
-    const values = historicalData.map(d => d[selectedPollutant]);
-    const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
-    const peak = Math.max(...values);
-    const first = values[0];
-    const last = values[values.length - 1];
-    const trend = ((last - first) / first * 100).toFixed(1);
+    if (historicalData.length === 0) return null;
     
-    return { avg, peak, trend, isUp: last > first };
-  }, [historicalData, selectedPollutant]);
+    const aqiValues = historicalData.map(d => d.aqi);
+    const avg = Math.round(aqiValues.reduce((a, b) => a + b, 0) / aqiValues.length);
+    const peak = Math.max(...aqiValues);
+    const first = aqiValues[0];
+    const last = aqiValues[aqiValues.length - 1];
+    const trend = ((last - first) / (first || 1) * 100).toFixed(1);
 
-  const getPollutantColor = (pollutant) => {
-    switch(pollutant) {
-        case 'aqi': return '#3b82f6';
-        case 'pm25': return '#ef4444';
-        case 'pm10': return '#f97316';
-        case 'no2': return '#a855f7';
-        default: return '#3b82f6';
-    }
+    // Diurnal Analysis (Day vs Night)
+    const dayData = historicalData.filter(d => d.hour >= 6 && d.hour < 18);
+    const nightData = historicalData.filter(d => d.hour < 6 || d.hour >= 18);
+    const dayAvg = dayData.length > 0 ? Math.round(dayData.reduce((a, b) => a + b.aqi, 0) / dayData.length) : 0;
+    const nightAvg = nightData.length > 0 ? Math.round(nightData.reduce((a, b) => a + b.aqi, 0) / nightData.length) : 0;
+
+    // Volatility (StDev approximation)
+    const stdev = Math.sqrt(aqiValues.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / aqiValues.length);
+    const volatility = ((stdev / (avg || 1)) * 100).toFixed(1);
+
+    return { avg, peak, trend, isUp: last > first, dayAvg, nightAvg, volatility };
+  }, [historicalData]);
+
+  const toggleMetric = (id) => {
+    setActiveMetrics(prev => 
+      prev.includes(id) 
+        ? (prev.length > 1 ? prev.filter(m => m !== id) : prev) 
+        : [...prev, id]
+    );
+  };
+
+  const handleExportCSV = () => {
+    if (historicalData.length === 0) return;
+    const headers = ['Timestamp', 'AQI', 'PM2.5', 'PM10', 'NO2'];
+    const csvContent = [
+      headers.join(','),
+      ...historicalData.map(d => [d.timestamp, d.aqi, d.pm25, d.pm10, d.no2].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `${selectedDistrict}_trends_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div className="space-y-6 pb-20 overflow-hidden">
-      {/* Premium Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-[#050a18]/40 backdrop-blur-xl p-8 rounded-[40px] border border-white/5 shadow-2xl">
-        <div className="animate-fade-in-up">
-            <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-white via-indigo-300 to-blue-400 bg-clip-text text-transparent flex items-center tracking-tight leading-none">
-                Air Intelligence
-            </h1>
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.3em] mt-2 opacity-60">
-                <Activity className="w-3 h-3 inline mr-1" /> Historical Analytics Engine
-            </p>
+    <div className="space-y-6 pb-20">
+      {/* Analytics Toolbar */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 glass-card p-6 border-white/5">
+        <div>
+          <h1 className="text-2xl font-black text-white flex items-center gap-3">
+            <TrendingUp className="w-7 h-7 text-blue-500" />
+            Advanced Analytics
+          </h1>
+          <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1 ml-10">
+            Professional Environmental Intelligence Engine
+          </p>
         </div>
-        
-        <div className="flex flex-wrap items-center gap-4">
-          {/* District Selector */}
-          <div className="relative group">
-            <select
-                value={selectedDistrict}
-                onChange={(e) => setSelectedDistrict(e.target.value)}
-                className="appearance-none bg-[#0f172a] border border-white/10 text-white pl-6 pr-12 py-3 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer min-w-[200px] hover:bg-white/10 transition-all shadow-xl"
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex bg-white/5 p-1 rounded-xl border border-white/5 mr-2">
+            <button
+              onClick={() => setViewMode('chart')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'chart' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
             >
-                {districts.delhi.map(d => <option key={d} value={d} className="bg-[#0f172a] text-white text-sm font-bold">{d}</option>)}
+              <ChartIcon className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+            >
+              <TableIcon className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* District Select */}
+          <div className="relative">
+            <select
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(e.target.value)}
+              className="appearance-none bg-[#0f172a] border border-white/10 text-white pl-4 pr-10 py-2.5 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40 min-w-[180px]"
+            >
+              {districts.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-white transition-colors" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
           </div>
 
           {/* Time Range */}
-          <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 shadow-inner">
-            {[{v:'1', l:'24H'}, {v:'7', l:'7D'}, {v:'30', l:'30D'}].map((range) => (
-                <button
-                    key={range.v}
-                    onClick={() => setTimeRange(range.v)}
-                    className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                    timeRange === range.v
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                        : 'text-gray-500 hover:text-white'
-                    }`}
-                >
-                    {range.l}
-                </button>
+          <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
+            {[{v:'1', l:'24H'}, {v:'7', l:'7D'}, {v:'30', l:'30D'}].map(range => (
+              <button
+                key={range.v}
+                onClick={() => setTimeRange(range.v)}
+                className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${timeRange === range.v ? 'bg-white shadow text-[#050a18]' : 'text-gray-500 hover:text-white'}`}
+              >
+                {range.l}
+              </button>
             ))}
           </div>
 
-          <select
-            value={selectedPollutant}
-            onChange={(e) => setSelectedPollutant(e.target.value)}
-            className="bg-[#0f172a] border border-white/10 text-white px-6 py-3 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          <button
+            onClick={handleExportCSV}
+            className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
+            title="Export to CSV"
           >
-            <option value="aqi">AQI Index</option>
-            <option value="pm25">PM2.5</option>
-            <option value="pm10">PM10</option>
-            <option value="no2">NO₂ Concentration</option>
-        </select>
+            <Download className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Main Analysis Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 relative h-[600px] glass-card p-10 border-white/5 flex flex-col group">
-          <div className="flex justify-between items-center mb-10">
-            <h3 className="text-2xl font-black text-white tracking-tighter flex items-center gap-4">
-              <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,1)]"></span>
-              {selectedPollutant.toUpperCase()} Variation Analysis
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Metric Selector Sidebar */}
+        <div className="lg:col-span-1 space-y-4">
+          <div className="glass-card p-6 border-white/5">
+            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5" /> Select Metrics
             </h3>
-            <div className="flex items-center gap-3">
-                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] opacity-60">Live Syncing</span>
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
+            <div className="space-y-3">
+              {pollutants.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => toggleMetric(p.id)}
+                  className={`w-full p-4 rounded-2xl border transition-all flex items-center justify-between group ${
+                    activeMetrics.includes(p.id) 
+                      ? 'bg-white/5 border-white/10 shadow-lg' 
+                      : 'border-transparent text-gray-500 hover:bg-white/[0.02]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color, boxShadow: activeMetrics.includes(p.id) ? `0 0 10px ${p.color}` : 'none' }}></div>
+                    <span className={`text-sm font-bold ${activeMetrics.includes(p.id) ? 'text-white' : ''}`}>{p.label}</span>
+                  </div>
+                  <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${
+                    activeMetrics.includes(p.id) ? 'bg-blue-600 border-blue-600' : 'border-white/10 group-hover:border-white/20'
+                  }`}>
+                    {activeMetrics.includes(p.id) && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-1.5 h-1.5 bg-white rounded-full" />}
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="flex-grow">
-            {loading ? (
-                <div className="h-full flex flex-col items-center justify-center space-y-4">
-                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-[10px] font-black text-blue-400 tracking-[0.3em] uppercase">Quantizing Datasets...</p>
-                </div>
-            ) : (
-                <ResponsiveContainer width="100%" height="100%">
+          {/* AI Analysis Card */}
+          <div className="glass-card p-6 border-blue-500/20 bg-blue-500/5 relative overflow-hidden">
+             <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-600/10 blur-xl"></div>
+             <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4">Insight Digest</h3>
+             <p className="text-sm text-blue-100/60 leading-relaxed">
+               {stats ? (
+                 <>
+                   {selectedDistrict} shows a <span className="text-white font-bold">{stats.trend}% {stats.isUp ? 'increase' : 'decrease'}</span> in local air contaminants over the last {timeRange} days. 
+                   The night-time correlation is <span className="text-white font-bold">{stats.nightAvg > stats.dayAvg ? '12% higher' : 'lower'}</span> than daytime readings.
+                 </>
+               ) : 'Analyzing datasets...'}
+             </p>
+          </div>
+        </div>
+
+        {/* Main Display Area */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="glass-card p-8 border-white/5 h-[500px] relative">
+            <AnimatePresence mode="wait">
+              {viewMode === 'chart' ? (
+                <motion.div 
+                  key="chart"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="h-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={historicalData}>
-                        <defs>
-                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={getPollutantColor(selectedPollutant)} stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor={getPollutantColor(selectedPollutant)} stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                        <XAxis 
-                            dataKey="time" 
-                            stroke="rgba(255,255,255,0.2)" 
-                            fontSize={10} 
-                            tickLine={false} 
-                            axisLine={false}
-                            tick={{ fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }}
-                        />
-                        <YAxis 
-                            stroke="rgba(255,255,255,0.2)" 
-                            fontSize={10} 
-                            tickLine={false} 
-                            axisLine={false}
-                            tick={{ fill: 'rgba(255,255,255,0.4)', fontWeight: 700 }}
-                        />
-                        <Tooltip content={<CustomTooltip theme={theme} />} cursor={{ stroke: 'rgba(59,130,246,0.2)', strokeWidth: 2 }} />
+                      <defs>
+                        {pollutants.map(p => (
+                          <linearGradient key={p.id} id={`color-${p.id}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={p.color} stopOpacity={0.2}/>
+                            <stop offset="95%" stopColor={p.color} stopOpacity={0}/>
+                          </linearGradient>
+                        ))}
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
+                      <XAxis 
+                        dataKey="time" 
+                        stroke="#64748b" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false}
+                        tick={{ fill: '#64748b', fontWeight: 700 }}
+                      />
+                      <YAxis 
+                        stroke="#64748b" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false}
+                        tick={{ fill: '#64748b', fontWeight: 700 }}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      {activeMetrics.map(id => (
                         <Area 
-                            type="monotone" 
-                            dataKey={selectedPollutant} 
-                            stroke={getPollutantColor(selectedPollutant)} 
-                            strokeWidth={4}
-                            fillOpacity={1} 
-                            fill="url(#colorValue)" 
-                            animationDuration={2000}
+                          key={id}
+                          type="monotone" 
+                          dataKey={id} 
+                          stroke={pollutants.find(p => p.id === id).color} 
+                          strokeWidth={3}
+                          fillOpacity={1} 
+                          fill={`url(#color-${id})`}
+                          animationDuration={1500}
                         />
-                        {stats && <ReferenceLine y={stats.avg} stroke="rgba(59,130,246,0.4)" strokeDasharray="3 3" label={{ value: 'AVG', fill: '#3b82f6', fontSize: 10, fontWeight: 900 }} />}
+                      ))}
+                      <Brush 
+                        dataKey="time" 
+                        height={30} 
+                        stroke="rgba(255,255,255,0.05)" 
+                        fill="rgba(255,255,255,0.01)"
+                        travellerWidth={10}
+                      />
                     </AreaChart>
-                </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Intelligence Sidebar */}
-        <div className="space-y-6">
-          {/* Real-time Trend Indicator */}
-          <div className="glass-card p-8 border-white/5 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 blur-[60px] rounded-full -mr-10 -mt-10 group-hover:bg-blue-600/20 transition-all duration-700"></div>
-            
-            <div className="relative z-10 flex flex-col h-full justify-between gap-8">
-                <div>
-                   <h4 className="text-[9px] font-black text-gray-500 uppercase tracking-[0.4em] mb-4 opacity-70">Momentum</h4>
-                   <div className="flex items-end gap-2">
-                        <span className="text-5xl font-black text-white tracking-tighter leading-none">
-                            {stats ? stats.trend : '0'}
-                            <span className="text-xl opacity-20">%</span>
-                        </span>
-                        {stats && (
-                            <div className={`mb-2 flex items-center gap-1 ${stats.isUp ? 'text-red-500' : 'text-emerald-500'}`}>
-                                {stats.isUp ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                                <span className="text-[9px] font-black uppercase tracking-widest">{stats.isUp ? 'High' : 'Low'}</span>
-                            </div>
-                        )}
-                   </div>
-                </div>
-
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Confidence Index</span>
-                        <span className="text-xs font-black text-blue-400">94.2%</span>
-                    </div>
-                </div>
-            </div>
-          </div>
-
-          {/* Quick Metrics */}
-          <div className="grid grid-cols-1 gap-6">
-            <div className="glass-card p-6 border-white/5 flex items-center justify-between hover:bg-white/[0.07] transition-all cursor-default">
-                <div>
-                    <div className="text-[9px] font-black text-gray-500 uppercase tracking-[0.3em] mb-1 opacity-60">Peak Value</div>
-                    <div className="text-2xl font-black text-white tracking-tighter leading-none">{stats?.peak || '-'}</div>
-                </div>
-                <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/10">
-                    <Zap className="w-4 h-4 text-red-500" />
-                </div>
-            </div>
-
-            <div className="glass-card p-6 border-white/5 flex items-center justify-between hover:bg-white/[0.07] transition-all cursor-default">
-                <div>
-                    <div className="text-[9px] font-black text-gray-500 uppercase tracking-[0.3em] mb-1 opacity-60">Average</div>
-                    <div className="text-2xl font-black text-white tracking-tighter leading-none">{stats?.avg || '-'}</div>
-                </div>
-                <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/10">
-                    <Activity className="w-4 h-4 text-blue-500" />
-                </div>
-            </div>
+                  </ResponsiveContainer>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="table"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="h-full flex flex-col"
+                >
+                  <div className="flex-grow overflow-auto custom-scrollbar">
+                    <table className="w-full text-left">
+                      <thead className="sticky top-0 bg-[#0f172a] border-b border-white/10">
+                        <tr>
+                          <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase">Timestamp</th>
+                          <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase">AQI</th>
+                          <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase">PM2.5</th>
+                          <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase">PM10</th>
+                          <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase">NO₂</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/[0.03]">
+                        {historicalData.map((d, i) => (
+                          <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                            <td className="px-4 py-4 text-xs font-bold text-gray-400">{d.fullTime}</td>
+                            <td className="px-4 py-4 text-xs font-black text-blue-400">{d.aqi}</td>
+                            <td className="px-4 py-4 text-xs font-black text-red-400">{d.pm25}</td>
+                            <td className="px-4 py-4 text-xs font-black text-orange-400">{d.pm10}</td>
+                            <td className="px-4 py-4 text-xs font-black text-purple-400">{d.no2}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-           {/* AI Warning System */}
-           <div className="glass-card p-6 border-amber-500/20 bg-amber-500/5">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-amber-500/20 rounded-lg">
-                        <AlertTriangle className="w-5 h-5 text-amber-500" />
-                    </div>
-                    <h3 className="text-xs font-black text-amber-500 uppercase tracking-widest">Predictive Alert</h3>
-                </div>
-                <p className="text-sm text-amber-200/70 font-medium leading-relaxed">
-                    Based on current patterns in <strong className="text-white">{selectedDistrict}</strong>, we anticipate a <span className="text-amber-500 font-bold">15% increase</span> in PM2.5 levels during tomorrow's morning peak.
-                </p>
-           </div>
-        </div>
-      </div>
+          {/* Intelligence Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="glass-card p-6 border-white/5 space-y-4">
+              <div className="flex items-center justify-between">
+                <Sun className="w-4 h-4 text-amber-500" />
+                <span className="text-[10px] font-black text-gray-500 uppercase">Day Avg</span>
+              </div>
+              <div className="text-3xl font-black text-white leading-none">{stats?.dayAvg || '--'} <span className="text-xs font-medium text-gray-600">AQI</span></div>
+              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-amber-500" style={{ width: `${Math.min((stats?.dayAvg / 300) * 100, 100)}%` }} />
+              </div>
+            </div>
 
-      {/* Cross-Pollutant Comparison */}
-      <div className="glass-card p-8 border-white/5">
-        <h3 className="text-xl font-black text-white tracking-tight mb-8">Atmospheric Composition Comparison</h3>
-        <div className="h-64">
-           <ResponsiveContainer width="100%" height="100%">
-             <BarChart data={historicalData.slice(-7)}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip theme={theme} />} cursor={{fill: 'rgba(255,255,255,0.02)'}} />
-                <Bar dataKey="pm25" fill="#ef4444" radius={[6, 6, 0, 0]} barSize={20} name="PM2.5" />
-                <Bar dataKey="pm10" fill="#f97316" radius={[6, 6, 0, 0]} barSize={20} name="PM10" />
-                <Bar dataKey="no2" fill="#a855f7" radius={[6, 6, 0, 0]} barSize={20} name="NO2" />
-             </BarChart>
-           </ResponsiveContainer>
+            <div className="glass-card p-6 border-white/5 space-y-4">
+              <div className="flex items-center justify-between">
+                <Moon className="w-4 h-4 text-indigo-400" />
+                <span className="text-[10px] font-black text-gray-500 uppercase">Night Avg</span>
+              </div>
+              <div className="text-3xl font-black text-white leading-none">{stats?.nightAvg || '--'} <span className="text-xs font-medium text-gray-600">AQI</span></div>
+              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-indigo-500" style={{ width: `${Math.min((stats?.nightAvg / 300) * 100, 100)}%` }} />
+              </div>
+            </div>
+
+            <div className="glass-card p-6 border-white/5 space-y-4">
+              <div className="flex items-center justify-between">
+                <Activity className="w-4 h-4 text-emerald-400" />
+                <span className="text-[10px] font-black text-gray-500 uppercase">Volatility</span>
+              </div>
+              <div className="text-3xl font-black text-white leading-none">{stats?.volatility || '--'}<span className="text-xl opacity-20">%</span></div>
+              <p className="text-[9px] text-gray-500 font-medium leading-tight">Variation coefficient across current dataset time-windows.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -147,4 +147,34 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// @route   PUT /api/auth/profile
+// @desc    Update user profile
+// @access  Private
+router.put('/profile', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { name, emailAlerts } = req.body;
+    
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (emailAlerts !== undefined) updates.emailAlerts = emailAlerts;
+
+    const user = await User.findByIdAndUpdate(decoded.id, updates, { new: true }).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
 module.exports = router;

@@ -34,14 +34,17 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
       
-      if (!response.ok) throw new Error('Login failed');
-      
       const data = await response.json();
+      
+      if (!response.ok) {
+        return { success: false, message: data.error || 'Login failed' };
+      }
+      
       localStorage.setItem('token', data.token);
       setUser(jwtDecode(data.token));
       return { success: true };
     } catch (error) {
-      return { success: false, message: error.message };
+      return { success: false, message: 'Network error. Is the server running?' };
     }
   };
 
@@ -53,11 +56,15 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(userData),
       });
       
-      if (!response.ok) throw new Error('Registration failed');
+      const data = await response.json();
+      
+      if (!response.ok) {
+        return { success: false, message: data.error || 'Registration failed' };
+      }
       
       return { success: true };
     } catch (error) {
-      return { success: false, message: error.message };
+      return { success: false, message: 'Network error. Is the server running?' };
     }
   };
 

@@ -15,12 +15,14 @@ export default function HomeNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [activeDropdown, setActiveDropdown] = useState(null); // 'alerts' or 'notifications'
+  const [activeDropdown, setActiveDropdown] = useState(null);
   const [alerts, setAlerts] = useState([]);
+  const [activeSection, setActiveSection] = useState('top');
   const location = useLocation();
 
   const handleNavClick = (e, id) => {
     e.preventDefault();
+    setActiveSection(id);
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -65,12 +67,27 @@ export default function HomeNavbar() {
 
       // Visibility logic: hide when scrolling down, show when scrolling up
       if (currentScrollY < 10) {
-        setVisible(true); // Always show at the very top
+        setVisible(true);
       } else if (currentScrollY > lastScrollY) {
-        setVisible(false); // Scrolling down
+        setVisible(false);
       } else {
-        setVisible(true); // Scrolling up
+        setVisible(true);
       }
+
+      // Scroll-spy: detect which section is in view
+      const sectionIds = ['contact', 'about', 'top'];
+      let found = 'top';
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 200) {
+            found = id;
+            break;
+          }
+        }
+      }
+      setActiveSection(found);
 
       setLastScrollY(currentScrollY);
     };
@@ -130,11 +147,16 @@ export default function HomeNavbar() {
           <nav className="hidden md:flex items-center">
             <div className="flex items-center gap-1 p-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
               {navItems.map((item) => {
+                const isActive = activeSection === item.id;
                 return (
                   <button
                     key={item.name}
                     onClick={(e) => handleNavClick(e, item.id)}
-                    className="relative px-5 py-2 rounded-xl text-[13px] font-semibold text-gray-400 hover:text-white transition-colors duration-300"
+                    className={`relative px-5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20'
+                        : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                    }`}
                   >
                     <motion.div
                       whileHover={{ scale: 1.05 }}
@@ -230,7 +252,11 @@ export default function HomeNavbar() {
                   >
                     <button
                       onClick={(e) => handleNavClick(e, item.id)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                        activeSection === item.id
+                          ? 'bg-gradient-to-r from-blue-600/70 to-purple-600/70 text-white shadow-lg shadow-blue-500/10'
+                          : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      }`}
                     >
                       {item.name}
                     </button>

@@ -11,6 +11,10 @@
   color-scheme: dark;
 }
 
+* {
+  font-family: 'Inter', inherit;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -42,6 +46,15 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.6);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
 
 /* Smooth transitions */

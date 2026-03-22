@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, Component } from 'react';
+import { motion } from 'framer-motion';
 import AQIWidget from '../components/Dashboard/AQIWidget';
 import PollutionCard from '../components/Dashboard/PollutionCard';
 import WeatherWidget from '../components/Dashboard/WeatherWidget';
@@ -22,7 +23,8 @@ import {
   Eye,
   BarChart3,
   Shield,
-  Sparkles
+  Sparkles,
+  Clock
 } from 'lucide-react';
 
 // Error boundary for WebGL
@@ -221,36 +223,38 @@ const Dashboard = () => {
         
         {/* Hero Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-10 px-4">
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-lg shadow-green-400/50"></div>
-              <span className="text-sm font-bold text-green-400 uppercase tracking-widest">Live Monitoring</span>
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-4xl"
+          >
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+              <span className="text-sm font-black text-blue-400 uppercase tracking-[0.2em]">Live Intelligence</span>
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent leading-tight mb-4">
-              {selectedRegion === 'all' ? 'Delhi' : regions.find(r => r.id === selectedRegion)?.label.split(' ')[1]} Air Quality
+            
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 tracking-tight leading-[1.1]">
+              <span className="bg-gradient-to-r from-white via-blue-100 to-blue-200 bg-clip-text text-transparent">
+                {selectedRegion === 'all' ? 'Delhi' : regions.find(r => r.id === selectedRegion)?.label.split(' ')[1]}
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                Air Quality
+              </span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-              Real-time pollution monitoring across <span className="text-white font-bold">{regionStats.total} locations</span>
-            </p>
-          </div>
-          
-          {/* Stats ribbon */}
-          <div className="animate-fade-in-up flex flex-wrap justify-center gap-4 md:gap-8" style={{ animationDelay: '0.5s' }}>
-            {[
-              { label: selectedRegion === 'all' ? 'Delhi Avg' : 'Region Avg', value: regionStats.avg, color: regionStats.avg > 100 ? '#ef4444' : regionStats.avg > 50 ? '#eab308' : '#22c55e' },
-              { label: 'Most Polluted', value: regionStats.max, color: '#ef4444', sub: regionStats.worst?.[1]?.district || regionStats.worst?.[1]?.city },
-              { label: 'Cleanest', value: regionStats.min, color: '#22c55e', sub: regionStats.best?.[1]?.district || regionStats.best?.[1]?.city },
-              { label: 'Locations', value: regionStats.total, color: '#3b82f6' },
-            ].map((s, i) => (
-              <div key={i} className="glass-card px-5 py-3 text-center min-w-[120px]">
-                <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold">{s.label}</div>
-                <div className="text-2xl md:text-3xl font-black mt-1" style={{ color: s.color, textShadow: `0 0 20px ${s.color}30` }}>
-                  {s.value || '--'}
-                </div>
-                {s.sub && <div className="text-[10px] text-gray-500 mt-0.5">{s.sub}</div>}
+
+            <div className="flex flex-wrap justify-center gap-4 text-sm font-medium text-gray-400 mb-2">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/5 bg-white/[0.03] backdrop-blur-md">
+                <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                <span>{regionStats.total} Monitoring Stations</span>
               </div>
-            ))}
-          </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/5 bg-white/[0.03] backdrop-blur-md">
+                <Clock className="w-3.5 h-3.5 text-purple-400" />
+                <span>Real-time Updates</span>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
         {/* Scroll indicator */}

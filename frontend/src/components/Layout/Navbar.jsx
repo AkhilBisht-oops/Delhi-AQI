@@ -19,11 +19,8 @@ import {
 } from 'lucide-react';
 const navLinks = [
   { name: 'Dashboard', path: '/dashboard', icon: <Home size={18} /> },
-  { name: 'About', path: '/#about', icon: <Globe size={18} /> },
-  { name: 'Contact', path: '/#contact', icon: <Mail size={18} /> },
   { name: 'Trends', path: '/trends', icon: <BarChart2 size={18} /> },
   { name: 'Delhi Reports', path: '/globe', icon: <Map size={18} /> },
-  { name: 'Heatmap', path: '/heatmap', icon: <Activity size={18} /> },
   { name: 'Pollution Tips', path: '/tips', icon: <Lightbulb size={18} /> },
 ];
 

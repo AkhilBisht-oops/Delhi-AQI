@@ -13,6 +13,7 @@ import Alerts from './pages/Alerts';
 import AdminPanel from './pages/AdminPanel';
 import Tips from './pages/Tips';
 import GlobeView from './pages/GlobeView';
+import Profile from './pages/Profile';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import './App.css';
 
@@ -59,6 +60,12 @@ function App() {
               <Route path="alerts" element={
                 <ProtectedRoute>
                   <Alerts />
+                </ProtectedRoute>
+              } />
+
+              <Route path="profile" element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               } />
 
