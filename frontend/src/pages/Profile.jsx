@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE_URL from '../api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
@@ -31,7 +32,7 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/auth/profile', {
+      const res = await fetch(`${API_BASE_URL}/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

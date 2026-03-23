@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import API_BASE_URL from '../../api';
 import { motion } from 'framer-motion';
 import {
   Activity, TrendingUp, Sparkles, Globe, Thermometer, MapPin
@@ -55,7 +56,7 @@ export default function LiveMonitoring() {
 
   useEffect(() => {
     // Fetch global AQI data summary
-    fetch('http://localhost:5000/api/aqi/global')
+    fetch(`${API_BASE_URL}/aqi/global`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data && data.total > 0) setGlobalData(data);

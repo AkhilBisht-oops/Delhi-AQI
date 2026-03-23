@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, Component } from 'react';
+import API_BASE_URL from '../api';
 import { motion } from 'framer-motion';
 import AqiOverview from '../components/Dashboard/AqiOverview';
 import AtmosphericStats from '../components/Dashboard/AtmosphericStats';
@@ -108,7 +109,7 @@ const Dashboard = () => {
 
   const fetchGlobalData = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/aqi/latest');
+      const res = await fetch(`${API_BASE_URL}/aqi/latest`);
       if (res.ok) {
         const dataArray = await res.json();
         if (dataArray && dataArray.length > 0) {

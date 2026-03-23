@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import API_BASE_URL from '../api';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
   LineChart, 
@@ -81,7 +82,7 @@ const Analytics = () => {
 
   const fetchDistricts = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/aqi/districts');
+      const res = await fetch(`${API_BASE_URL}/aqi/districts`);
       const data = await res.json();
       if (data.districts) setDistricts(data.districts.sort());
     } catch (err) {
@@ -92,7 +93,7 @@ const Analytics = () => {
   const fetchHistoricalData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/aqi/history?district=${encodeURIComponent(selectedDistrict)}&days=${timeRange}`);
+      const res = await fetch(`${API_BASE_URL}/aqi/history?district=${encodeURIComponent(selectedDistrict)}&days=${timeRange}`);
       if (!res.ok) throw new Error('Failed to fetch history');
       const data = await res.json();
       

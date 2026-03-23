@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE_URL from '../../api';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Menu, X, Bell, AlertCircle } from 'lucide-react';
@@ -33,7 +34,7 @@ export default function HomeNavbar() {
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/aqi/latest');
+        const res = await fetch(`${API_BASE_URL}/aqi/latest`);
         if (res.ok) {
           const data = await res.json();
           const critical = data

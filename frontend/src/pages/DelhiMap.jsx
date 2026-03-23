@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import API_BASE_URL from '../api';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useTheme } from '../contexts/ThemeContext';
@@ -62,7 +63,7 @@ const DelhiMap = () => {
 
   const fetchDelhiData = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/aqi/latest');
+      const res = await fetch(`${API_BASE_URL}/aqi/latest`);
       if (!res.ok) throw new Error('Failed to fetch Delhi data');
       const dataArray = await res.json();
       

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE_URL from '../../api';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from './UserMenu';
@@ -36,7 +37,7 @@ const Header = () => {
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/aqi/latest');
+        const res = await fetch(`${API_BASE_URL}/aqi/latest`);
         if (res.ok) {
           const data = await res.json();
           const critical = data

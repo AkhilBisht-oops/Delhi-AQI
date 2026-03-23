@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import API_BASE_URL from '../api';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
   BarChart, 
@@ -57,7 +58,7 @@ const Globe = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/aqi/latest');
+        const res = await fetch(`${API_BASE_URL}/aqi/latest`);
         if (res.ok) {
           const dataArray = await res.json();
           const dataObj = {};
