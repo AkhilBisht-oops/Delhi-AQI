@@ -2,6 +2,8 @@
 
 A premium, real-time Air Quality Index (AQI) monitoring platform designed to provide actionable insights into pollution levels in Delhi and across the globe. Built with a modern tech stack focusing on performance, visual excellence, and user engagement.
 
+[Live Demo](https://delhi-aqi-delta.vercel.app/)
+
 ## 🚀 Key Features
 
 - **Live Real-time Monitoring**: Instant updates on PM2.5, PM10, and other key pollutants.
