@@ -78,25 +78,6 @@ function Earth({ scrollProgress = 0 }) {
     // Australia
     drawLand(1540, 680, 90, 60, 'rgba(34, 197, 94, 0.3)', 'rgba(34, 197, 94, 0.06)');
 
-    // City hot-spots (tiny bright dots)
-    const cities = [
-      [430, 310, '#22c55e'], [560, 300, '#22c55e'],  // US cities
-      [990, 280, '#3b82f6'], [960, 310, '#3b82f6'],  // Europe
-      [1250, 440, '#ef4444'], [1350, 350, '#ef4444'], // Asia
-      [1020, 480, '#f97316'],                          // Africa
-    ];
-    cities.forEach(([cx, cy, col]) => {
-      ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-      ctx.fill();
-      // glow ring
-      ctx.strokeStyle = col.replace(')', ', 0.3)').replace('rgb', 'rgba');
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 8, 0, Math.PI * 2);
-      ctx.stroke();
-    });
 
     return new THREE.CanvasTexture(canvas);
   }, []);
@@ -204,57 +185,6 @@ function Particles() {
   );
 }
 
-// Connection arcs between cities
-function ConnectionArcs() {
-  const ref = useRef();
-  
-  useFrame((_, delta) => {
-    if (ref.current) {
-      ref.current.rotation.y += delta * 0.08;
-    }
-  });
-
-  const arcs = useMemo(() => {
-    const lines = [];
-    const pairs = [
-      [0.5, 0.7, 0.4, -0.3, 0.8, 0.5],
-      [-0.6, 0.3, 0.7, 0.4, 0.5, 0.8],
-      [0.2, -0.5, 0.8, -0.7, 0.2, 0.7],
-    ];
-    pairs.forEach(([x1, y1, z1, x2, y2, z2]) => {
-      const points = [];
-      for (let t = 0; t <= 1; t += 0.05) {
-        const x = x1 + (x2 - x1) * t;
-        const y = y1 + (y2 - y1) * t + Math.sin(t * Math.PI) * 0.8;
-        const z = z1 + (z2 - z1) * t;
-        const r = 2.3;
-        const len = Math.sqrt(x * x + y * y + z * z);
-        points.push(new THREE.Vector3(x / len * r, y / len * r + Math.sin(t * Math.PI) * 0.6, z / len * r));
-      }
-      const curve = new THREE.CatmullRomCurve3(points);
-      lines.push(curve.getPoints(30));
-    });
-    return lines;
-  }, []);
-
-  return (
-    <group ref={ref}>
-      {arcs.map((points, i) => (
-        <line key={i}>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={points.length}
-              array={new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <lineBasicMaterial color="#3b82f6" transparent opacity={0.2} />
-        </line>
-      ))}
-    </group>
-  );
-}
 
 export default function EarthGlobe({ scrollProgress = 0 }) {
   // Scroll-reactive camera zoom
@@ -277,7 +207,6 @@ export default function EarthGlobe({ scrollProgress = 0 }) {
       <pointLight position={[0, 5, 0]} intensity={0.2} color="#8b5cf6" />
       <Stars radius={60} depth={40} count={3000} factor={3} saturation={0} fade speed={0.4} />
       <Particles />
-      <ConnectionArcs />
       <Earth scrollProgress={scrollProgress} />
     </Canvas>
   );

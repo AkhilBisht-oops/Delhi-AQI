@@ -20,9 +20,9 @@ import {
 } from 'lucide-react';
 const navLinks = [
   { name: 'Dashboard', path: '/dashboard', icon: <Home size={18} /> },
-  { name: 'Analytics', path: '/analytics', icon: <BarChart2 size={18} /> },
-  { name: 'Delhi Reports', path: '/globe', icon: <Map size={18} /> },
-  { name: 'Health Advisory', path: '/advisory', icon: <Lightbulb size={18} /> },
+  { name: 'Heatmap', path: '/heatmap', icon: <Map size={18} /> },
+  { name: 'Reports', path: '/analytics', icon: <BarChart2 size={18} /> },
+  { name: 'Advisory', path: '/advisory', icon: <Lightbulb size={18} /> },
 ];
 
 const Header = () => {

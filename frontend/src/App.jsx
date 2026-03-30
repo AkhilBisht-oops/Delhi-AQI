@@ -12,7 +12,6 @@ import Register from './pages/Register';
 import Alerts from './pages/Alerts';
 import AdminPanel from './pages/AdminPanel';
 import HealthAdvisory from './pages/HealthAdvisory';
-import Globe from './pages/Globe';
 import Profile from './pages/Profile';
 import AuthSuccess from './pages/AuthSuccess';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -50,11 +49,6 @@ function App() {
               <Route path="advisory" element={
                 <ProtectedRoute>
                   <HealthAdvisory />
-                </ProtectedRoute>
-              } />
-              <Route path="globe" element={
-                <ProtectedRoute>
-                  <Globe />
                 </ProtectedRoute>
               } />
 
